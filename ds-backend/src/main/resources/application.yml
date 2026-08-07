@@ -1,0 +1,25 @@
+spring:
+  # Disable Hibernate auto DDL
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  # Postgres DataSource (Customer & AI)
+  datasource:
+    postgres:
+      jdbc-url: jdbc:postgresql://localhost:5432/gastro_ai
+      username: postgres
+      password: 123456
+      driver-class-name: org.postgresql.Driver
+
+    # MySQL DataSource (Admin CMS)
+    mysql:
+      jdbc-url: jdbc:mysql://localhost:3306/gastro_admin?useUnicode=true&characterEncoding=utf8
+      username: gastro
+      password: 123456
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Disable default Flyway auto-configuration because we use multiple datasources
+  flyway:
+    enabled: false

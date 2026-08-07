@@ -1,0 +1,42 @@
+# Tập luật nghiệp vụ (Business Rules) - Xác thực tài khoản
+
+Dưới đây là danh sách các quy tắc nghiệp vụ (BR) bắt buộc phải tuân thủ trong toàn bộ quá trình thiết kế, lập trình Frontend và Backend cho module Xác thực.
+
+## BR-01: Định dạng Số điện thoại
+- Số điện thoại hợp lệ phải là số điện thoại Việt Nam.
+- **Quy tắc:** Bắt buộc bắt đầu bằng số `0`, có độ dài đúng `10` chữ số. Chỉ chứa ký tự số (0-9).
+- **Phạm vi áp dụng:** Frontend (lúc gõ Input) và Backend (lúc validate Request).
+
+## BR-02: Quy tắc Mật khẩu
+- Mật khẩu phải có độ dài tối thiểu **8 ký tự** (`Pass >= 8`).
+- Bắt buộc phải có trường "Xác nhận mật khẩu" trên UI. Hai trường này phải so khớp tuyệt đối.
+- **Bảo mật:** Backend tuyệt đối không lưu mật khẩu dạng rõ (plaintext). Bắt buộc mã hoá bằng thuật toán **Bcrypt** trước khi lưu vào cột `password_hash`.
+
+## BR-03: Tính duy nhất của Tài khoản
+- Một số điện thoại chỉ được phép liên kết với **duy nhất 01 tài khoản**.
+- **Quy tắc:** Khi đăng ký, nếu BE phát hiện SĐT đã tồn tại trong DB, hệ thống chặn lại và trả ngay mã lỗi `409 Conflict`. Cột `phone_number` trong DB phải có ràng buộc `UNIQUE`.
+
+## BR-04: Quy tắc sinh và hạn dùng mã OTP
+- Độ dài mã OTP là **6 chữ số** (sinh ngẫu nhiên).
+- **Thời gian hiệu lực (TTL):** Đúng **180 giây (3 phút)** kể từ thời điểm BE sinh ra mã.
+- **Giới hạn spam:** Một số điện thoại chỉ được yêu cầu gửi lại mã OTP tối đa **5 lần / ngày**. Nếu vượt quá, trả lỗi `429 Too Many Requests`.
+
+## BR-05: Thu hồi và trạng thái OTP
+- Mã OTP chỉ được sử dụng thành công **đúng 1 lần**. 
+- Sau khi xác thực thành công, trạng thái OTP trong bảng `otp_logs` bắt buộc phải cập nhật thành `is_used = TRUE` để ngăn chặn hành vi dùng lại mã cũ (Replay attack).
+
+## BR-06: Quy tắc bảo mật Phiên làm việc (Token)
+- Mọi giao tiếp sau khi đăng nhập thành công phải dùng **JSON Web Token (JWT)**.
+- **Access Token:** Dùng để gọi API, thời gian sống (Expiration) ngắn: **1 giờ**.
+- **Refresh Token:** Dùng để cấp lại Access Token khi hết hạn, thời gian sống dài: **7 ngày**.
+- Khi người dùng đăng xuất (Logout), hệ thống phải xoá/vô hiệu hoá Token ở cả Client và Server.
+
+## BR-07: Luồng Quên mật khẩu
+- Khi người dùng chọn quên mật khẩu, hệ thống sinh ra một mã OTP 6 số và gửi qua SMS (tuân thủ BR-04 và BR-05 về giới hạn spam và tính năng sử dụng 1 lần).
+- Chỉ cho phép thay đổi mật khẩu khi người dùng cung cấp chính xác Số điện thoại, Mã OTP hợp lệ, và Mật khẩu mới đạt chuẩn (tuân thủ BR-02).
+- Nếu mã OTP sai hoặc hết hạn, trả về lỗi `400 Bad Request`.
+
+## BR-08: Phân tách hệ thống Quản trị (Admin CMS) và Khách hàng
+- **Độc lập cơ sở dữ liệu:** Dữ liệu Khách hàng lưu tại PostgreSQL, dữ liệu Quản trị viên lưu tại MySQL.
+- **Quy tắc đăng nhập CMS:** Admin đăng nhập bằng Username hoặc Email và Mật khẩu. Không sử dụng OTP.
+- **Tiền tố định danh (Prefix Authentication):** Khi xử lý Token, hệ thống Backend bắt buộc phải gắn tiền tố `ADMIN:` hoặc `CUSTOMER:` vào `Subject` của JWT để phân luồng truy xuất dữ liệu từ đúng Database, ngăn chặn hoàn toàn việc Khách hàng sử dụng chung Username với Admin để leo quyền (Privilege Escalation).

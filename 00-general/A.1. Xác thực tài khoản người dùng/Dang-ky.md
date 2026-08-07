@@ -1,0 +1,87 @@
+# Tài liệu Đặc tả Yêu cầu Nghiệp vụ (BA) - Đăng ký tài khoản
+
+## 1. Thông tin chung
+- **Mã chức năng:** A.1.1
+- **Tên chức năng:** Đăng ký tài khoản (Customer Registration)
+- **Tác nhân (Actor):** Khách hàng (Customer)
+- **Cơ sở dữ liệu:** PostgreSQL
+
+## 2. Mục tiêu
+Cho phép khách hàng mới đăng ký tài khoản vào hệ thống Gastro AI thông qua số điện thoại cá nhân.
+
+## 3. Yêu cầu giao diện & Frontend (FE)
+- **Màn hình:** Màn hình Đăng ký tài khoản (Sign-up)
+
+### 3.1. Mô tả giao diện (Wireframe Layout)
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                        │
+│   [  Hình ảnh minh hoạ  ]               ĐĂNG KÝ TÀI KHOẢN MỚI                                          │
+│   [   Gastro AI App     ]                                                                              │
+│   [                     ]               Họ và tên:                                                     │
+│                                         [ Nhập họ và tên của bạn.................................... ] │
+│                                                                                                        │
+│                                         Số điện thoại:                                                 │
+│                                         [ Nhập số điện thoại........................................ ] │
+│                                                                                                        │
+│                                         Mật khẩu:                                                      │
+│                                         [ Nhập mật khẩu........................................ ] [👁] │
+│                                                                                                        │
+│                                         Xác nhận mật khẩu:                                             │
+│                                         [ Nhập lại mật khẩu.................................... ] [👁] │
+│                                                                                                        │
+│                                         [                  ĐĂNG KÝ                 ]                   │
+│                                                                                                        │
+│                                         Đã có tài khoản? [Đăng nhập ngay]                              │
+│                                                                                                        │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2. Chức năng (Functional)
+- **Trường thông tin (Input):**
+  - Họ và tên (Bắt buộc)
+  - Số điện thoại (Bắt buộc)
+  - Mật khẩu (Bắt buộc)
+  - Xác nhận mật khẩu (Bắt buộc)
+- **Quy tắc xác thực (Validation - TS Form):**
+  - **Số điện thoại:** Chỉ nhận số, đúng định dạng số điện thoại Việt Nam (10 số, bắt đầu bằng 0).
+  - **Mật khẩu:** Độ dài tối thiểu >= 8 ký tự (`Pass >= 8`). Hiển thị lỗi màu đỏ nếu nhập dưới 8 ký tự.
+  - **Xác nhận mật khẩu:** Phải trùng khớp tuyệt đối với trường Mật khẩu.
+  - Button "Đăng ký" sẽ bị disable (mờ đi) nếu các trường chưa thoả mãn điều kiện validate.
+
+## 4. Yêu cầu Backend (BE)
+- **API Endpoint:** `POST /api/v1/customers/register`
+- **Database Migration:** 
+  - Tạo file `V2__create_customer_table.sql` (cho PostgreSQL) để khởi tạo cấu trúc bảng lưu trữ thông tin Customer (nếu chưa có hoặc cần update trường).
+- **Luồng xử lý Logic:**
+  1. Nhận Payload từ FE gửi lên (Họ tên, SĐT, Mật khẩu).
+  2. **Query DB (Postgres):** Truy vấn kiểm tra xem Số điện thoại này đã tồn tại trong bảng `customers` hay chưa (kiểm tra trùng lặp).
+  3. **Xử lý kết quả:**
+     - Nếu đã tồn tại: BE trả về HTTP Status `409 Conflict` kèm thông báo lỗi `"Số điện thoại đã được đăng ký"`.
+     - Nếu chưa tồn tại: BE tạm thời ghi nhận thông tin, kích hoạt quy trình sinh mã OTP gửi về SĐT của khách hàng, và trả về HTTP Status `200 OK` hoặc `202 Accepted` để FE chuyển sang màn hình Xác thực OTP.
+
+## 5. Ngoại lệ (Exception Handling)
+| Mã lỗi HTTP | Mô tả | Hiển thị trên FE |
+|---|---|---|
+| `400 Bad Request` | Định dạng dữ liệu gửi lên bị sai (FE lọt Validation) | Toast lỗi: "Dữ liệu không hợp lệ" |
+| `409 Conflict` | Số điện thoại đã được đăng ký | Text đỏ dưới input SĐT: "Số điện thoại đã tồn tại" |
+| `500 Internal Error` | Lỗi kết nối DB / Lỗi server chưa xác định | Toast lỗi: "Hệ thống đang bận, vui lòng thử lại sau" |
+
+---
+
+## 6. Cấu trúc Database (Trực quan)
+
+**Bảng: `customers` (Lưu trữ trên PostgreSQL)**
+
+| Tên cột (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả |
+| :--- | :--- | :--- | :--- |
+| **`id`** | `UUID` | **`PRIMARY KEY`**, `DEFAULT gen_random_uuid()` | Khóa chính, tự sinh bằng hàm UUID của Postgres |
+| **`full_name`** | `TEXT` | `NOT NULL` | Họ và tên khách hàng |
+| **`phone_number`** | `TEXT` | `NOT NULL`, **`UNIQUE`** | Số điện thoại (Dùng để đăng nhập) |
+| **`email`** | `TEXT` | `UNIQUE` | Email (Có thể cập nhật sau) |
+| **`password_hash`**| `TEXT` | `NOT NULL` | Chuỗi mật khẩu đã bị mã hoá Bcrypt |
+| **`is_active`** | `BOOLEAN` | `DEFAULT TRUE` | Trạng thái hoạt động của tài khoản |
+
+> [!NOTE]
+> *Vì bảng `customers` thực tế đã được tạo trong script `V1__init_postgres_schema.sql`, file migration `V2` sẽ đóng vai trò như một bản cập nhật/chuẩn hoá lại bảng này (ví dụ: bổ sung cột `created_at` nếu cần) tuỳ theo quyết định cuối cùng của đội Dev.*

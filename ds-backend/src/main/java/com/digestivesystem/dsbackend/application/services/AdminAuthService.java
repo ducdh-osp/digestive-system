@@ -1,0 +1,52 @@
+package com.digestivesystem.dsbackend.application.services;
+
+import com.digestivesystem.dsbackend.application.dtos.request.AdminLoginRequest;
+import com.digestivesystem.dsbackend.application.dtos.response.AdminAuthResponse;
+import com.digestivesystem.dsbackend.infrastructure.entities.mysql.Admin;
+import com.digestivesystem.dsbackend.infrastructure.repositories.mysql.AdminRepository;
+import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AdminAuthService {
+
+    private final AdminRepository adminRepository;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsServiceImpl userDetailsService;
+
+    public AdminAuthService(AdminRepository adminRepository, JwtService jwtService,
+                            AuthenticationManager authenticationManager, UserDetailsServiceImpl userDetailsService) {
+        this.adminRepository = adminRepository;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+        this.userDetailsService = userDetailsService;
+    }
+
+    public AdminAuthResponse login(AdminLoginRequest request) {
+        // Authenticate with prefix
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken("ADMIN:" + request.getUsername(), request.getPassword())
+        );
+
+        Admin admin = adminRepository.findByUsernameOrEmail(request.getUsername(), request.getUsername())
+                .orElseThrow(() -> new RuntimeException("ADMIN_NOT_FOUND"));
+
+        if (!admin.getIsActive()) {
+            throw new RuntimeException("ADMIN_BANNED");
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername("ADMIN:" + admin.getUsername());
+        String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+        AdminAuthResponse.AdminDto adminDto = new AdminAuthResponse.AdminDto(
+                admin.getId(), admin.getUsername(), admin.getEmail(), admin.getRole().getRoleName()
+        );
+
+        return new AdminAuthResponse(accessToken, refreshToken, adminDto);
+    }
+}
