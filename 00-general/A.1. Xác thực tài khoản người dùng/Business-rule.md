@@ -36,7 +36,6 @@ Dưới đây là danh sách các quy tắc nghiệp vụ (BR) bắt buộc ph�
 - Chỉ cho phép thay đổi mật khẩu khi người dùng cung cấp chính xác Số điện thoại, Mã OTP hợp lệ, và Mật khẩu mới đạt chuẩn (tuân thủ BR-02).
 - Nếu mã OTP sai hoặc hết hạn, trả về lỗi `400 Bad Request`.
 
-## BR-08: Phân tách hệ thống Quản trị (Admin CMS) và Khách hàng
-- **Độc lập cơ sở dữ liệu:** Dữ liệu Khách hàng lưu tại PostgreSQL, dữ liệu Quản trị viên lưu tại MySQL.
-- **Quy tắc đăng nhập CMS:** Admin đăng nhập bằng Username hoặc Email và Mật khẩu. Không sử dụng OTP.
-- **Tiền tố định danh (Prefix Authentication):** Khi xử lý Token, hệ thống Backend bắt buộc phải gắn tiền tố `ADMIN:` hoặc `CUSTOMER:` vào `Subject` của JWT để phân luồng truy xuất dữ liệu từ đúng Database, ngăn chặn hoàn toàn việc Khách hàng sử dụng chung Username với Admin để leo quyền (Privilege Escalation).
+## BR-08: Tiền tố định danh Token (Prefix Authentication) giữa Customer và Admin
+- Hệ thống có 2 tác nhân đăng nhập độc lập: Khách hàng (Customer - PostgreSQL) và Quản trị viên (Admin - MySQL). Chi tiết luồng đăng nhập Admin CMS xem tại module **A.3. Xác thực tài khoản CMS**.
+- **Quy tắc:** Khi cấp phát Token cho Customer, Backend bắt buộc phải gắn tiền tố `CUSTOMER:` vào `Subject` của JWT (tương ứng Admin là `ADMIN:`) để phân luồng truy xuất dữ liệu đúng Database, ngăn chặn hoàn toàn việc leo quyền (Privilege Escalation) giữa 2 tác nhân dù trùng Username/SĐT.
