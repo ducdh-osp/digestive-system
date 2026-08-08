@@ -64,13 +64,7 @@ Cho phép khách hàng đã có tài khoản (đã hoàn tất đăng ký và x�
 | `403 Forbidden` | Tài khoản bị khóa (Banned) | "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH." |
 | `500 Internal Error` | Lỗi server chưa xác định | Toast: "Hệ thống đang bận, vui lòng thử lại sau." |
 
-## 6. Luồng Đăng nhập Quản trị (Admin CMS)
-- **API Endpoint:** `POST /api/v1/admin/auth/login`
-- **Màn hình Frontend:** `/admin/login` (Giao diện chuyên biệt)
-- **Cơ sở dữ liệu:** MySQL (bảng `admins`)
+## 6. Ghi chú liên quan Đăng nhập Quản trị (Admin CMS)
+Đăng nhập Quản trị (Admin CMS) là một tác nhân (Actor) và luồng nghiệp vụ độc lập với Customer (khác Database — MySQL, khác cơ chế đăng nhập — không OTP, khác bảng dữ liệu — `admins`). Toàn bộ đặc tả chi tiết được tách riêng, xem tại module **A.3. Xác thực tài khoản CMS**.
 
-### 6.1. Xử lý Logic khác biệt
-1. Admin đăng nhập bằng **Username hoặc Email** thay vì Số điện thoại.
-2. Không hỗ trợ tính năng đăng nhập bằng mã OTP.
-3. Backend sử dụng kỹ thuật **Prefix Authentication** (`ADMIN:<username>`) để phân biệt luồng dữ liệu Admin và Customer trong `UserDetailsServiceImpl`.
-4. Token sau khi cấp phát phải chứa thông tin Role của Admin (`SUPER_ADMIN`, `DOCTOR`, v.v.) và được lưu trữ độc lập tại Frontend (`adminAccessToken`) để không xung đột với phiên làm việc của Customer.
+Điểm liên quan duy nhất giữa hai module là cơ chế **Prefix Authentication** trong JWT (`ADMIN:` / `CUSTOMER:`) — xem BR-08 trong `Business-rule.md` của module này.

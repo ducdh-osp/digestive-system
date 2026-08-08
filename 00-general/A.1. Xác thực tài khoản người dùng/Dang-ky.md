@@ -51,7 +51,7 @@ Cho phép khách hàng mới đăng ký tài khoản vào hệ thống Gastro AI
   - Button "Đăng ký" sẽ bị disable (mờ đi) nếu các trường chưa thoả mãn điều kiện validate.
 
 ## 4. Yêu cầu Backend (BE)
-- **API Endpoint:** `POST /api/v1/customers/register`
+- **API Endpoint:** `POST /api/v1/auth/register`
 - **Database Migration:** 
   - Tạo file `V2__create_customer_table.sql` (cho PostgreSQL) để khởi tạo cấu trúc bảng lưu trữ thông tin Customer (nếu chưa có hoặc cần update trường).
 - **Luồng xử lý Logic:**

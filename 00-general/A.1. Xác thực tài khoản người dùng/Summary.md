@@ -7,7 +7,7 @@ Tài liệu này tổng hợp luồng đi (Flow) của hệ thống khi người
 
 1. **Bước 1 (FE):** Khách hàng vào trang Đăng ký, nhập Họ tên, Số điện thoại, và Mật khẩu.
 2. **Bước 2 (FE):** FE validate dữ liệu hợp lệ (Pass >= 8, SĐT đúng chuẩn). Bấm "Đăng ký".
-3. **Bước 3 (BE):** API `/api/v1/customers/register` tiếp nhận. Query DB kiểm tra SĐT. 
+3. **Bước 3 (BE):** API `/api/v1/auth/register` tiếp nhận. Query DB kiểm tra SĐT. 
    - Nếu đã tồn tại: Báo lỗi 409.
    - Nếu chưa tồn tại: BE sinh ngẫu nhiên mã OTP 6 số, gọi dịch vụ SMS (hoặc giả lập) để gửi mã tới SĐT.
 4. **Bước 4 (FE):** Nhận HTTP 200, chuyển khách hàng sang trang Nhập OTP. Kích hoạt đồng hồ 180s.
