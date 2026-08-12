@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import ProfilePage from '../../modules/profile/pages/ProfilePage';
 import AuthLayout from '../../shared/layouts/AuthLayout';
 import LoginPage from '../../modules/auth/pages/LoginPage';
 import RegisterPage from '../../modules/auth/pages/RegisterPage';
@@ -79,7 +80,14 @@ export const router = createBrowserRouter([
     element: <AdminDashboardPage />,
   },
   {
+  path: '/profile',
+  element: localStorage.getItem('accessToken')
+    ? <ProfilePage />
+    : <Navigate to="/login" replace />,
+},
+  {
     path: '/admin',
     element: <Navigate to="/admin/dashboard" replace />,
   }
+  
 ]);
