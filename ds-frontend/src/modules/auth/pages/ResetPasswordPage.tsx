@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, message } from 'antd';
+import { Form, Input, message } from 'antd';
 import { LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import type { ResetPasswordRequest } from '../types';
+import { PrimaryButton } from '../../../shared/components/Button';
 
 const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -121,14 +122,9 @@ const ResetPasswordPage: React.FC = () => {
         </Form.Item>
 
         <Form.Item className="mt-8">
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 h-12 rounded-lg font-semibold text-base transition-all shadow-md hover:shadow-lg"
-          >
+          <PrimaryButton htmlType="submit" loading={loading}>
             ĐỔI MẬT KHẨU
-          </Button>
+          </PrimaryButton>
         </Form.Item>
       </Form>
     </div>

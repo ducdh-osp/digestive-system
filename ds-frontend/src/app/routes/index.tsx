@@ -1,5 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import ProfilePage from '../../modules/profile/pages/ProfilePage';
 import AuthLayout from '../../shared/layouts/AuthLayout';
+import { LogoutButton } from '../../shared/components/Button';
+import { STORAGE_KEYS } from '../../core/constants/storageKeys';
+import { useCustomerAuth } from '../../shared/hooks/useAuth';
 import LoginPage from '../../modules/auth/pages/LoginPage';
 import RegisterPage from '../../modules/auth/pages/RegisterPage';
 import VerifyOtpPage from '../../modules/auth/pages/VerifyOtpPage';
@@ -9,25 +13,24 @@ import AdminLoginPage from '../../modules/admin-auth/pages/AdminLoginPage';
 import AdminDashboardPage from '../../modules/admin/pages/AdminDashboardPage';
 
 const ProtectedRoute = () => {
-  const token = localStorage.getItem('accessToken');
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const { isAuthenticated, user, logout } = useCustomerAuth();
 
-  if (!token) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white shadow-sm p-4 px-8 flex justify-between items-center border-b">
-        <h1 className="text-2xl font-bold text-blue-900">Gastro AI</h1>
+      <header className="bg-gradient-to-br from-[#3E93C4] to-[#7DCBE8] shadow-md p-4 px-8 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-xl">
+            G
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-wide">Gastro AI</h1>
+        </div>
         <div className="flex items-center gap-4">
-          <span className="text-gray-700 font-medium">Xin chào, {user?.fullName || 'Khách'}!</span>
-          <button 
-            onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
-            className="text-red-500 hover:text-red-700 font-medium cursor-pointer transition-colors"
-          >
-            Đăng xuất
-          </button>
+          <span className="text-white font-medium">Xin chào, {user?.fullName || 'Khách'}!</span>
+          <div className="h-8 w-px bg-white/30"></div>
+          <LogoutButton onClick={logout} />
         </div>
       </header>
       <main className="p-8">
@@ -79,7 +82,13 @@ export const router = createBrowserRouter([
     element: <AdminDashboardPage />,
   },
   {
+    path: '/profile',
+    element: localStorage.getItem(STORAGE_KEYS.customer.accessToken)
+      ? <ProfilePage />
+      : <Navigate to="/login" replace />,
+  },
+  {
     path: '/admin',
     element: <Navigate to="/admin/dashboard" replace />,
-  }
+  },
 ]);

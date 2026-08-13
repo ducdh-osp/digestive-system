@@ -1,16 +1,19 @@
 package com.digestivesystem.dsbackend.application.services;
 
+import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.request.ForgotPasswordRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.LoginRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.RegisterRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.ResetPasswordRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.VerifyOtpRequest;
 import com.digestivesystem.dsbackend.application.dtos.response.AuthResponse;
+import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
 import com.digestivesystem.dsbackend.infrastructure.entities.postgres.Customer;
 import com.digestivesystem.dsbackend.infrastructure.entities.postgres.OtpLog;
 import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.CustomerRepository;
 import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.OtpLogRepository;
 import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,24 +48,24 @@ public class AuthService {
     @Transactional(transactionManager = "postgresTransactionManager")
     public void register(RegisterRequest request) {
         if (customerRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new RuntimeException("PHONE_EXISTS");
+            throw new BusinessException(HttpStatus.CONFLICT, "Số điện thoại đã tồn tại");
         }
 
         // Limit spam: max 5 times a day
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
         long count = otpLogRepository.countByPhoneNumberAndCreatedAtAfter(request.getPhoneNumber(), startOfDay);
         if (count >= 5) {
-            throw new RuntimeException("TOO_MANY_REQUESTS");
+            throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã vượt quá số lần nhận mã trong ngày.");
         }
 
         String otp = String.format("%06d", new Random().nextInt(999999));
-        
+
         OtpLog otpLog = new OtpLog();
         otpLog.setPhoneNumber(request.getPhoneNumber());
         otpLog.setOtpCode(otp);
         otpLog.setExpiresAt(LocalDateTime.now().plusSeconds(180));
         otpLog.setIsUsed(false);
-        
+
         otpLogRepository.save(otpLog);
 
         // Mock SMS
@@ -76,7 +79,16 @@ public class AuthService {
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
         OtpLog otpLog = otpLogRepository.findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
                 request.getPhoneNumber(), request.getOtpCode(), LocalDateTime.now())
-                .orElseThrow(() -> new RuntimeException("INVALID_OTP"));
+                .orElseGet(() -> {
+                    boolean matchesButExpired = otpLogRepository
+                            .findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseOrderByCreatedAtDesc(
+                                    request.getPhoneNumber(), request.getOtpCode())
+                            .isPresent();
+                    if (matchesButExpired) {
+                        throw new BusinessException(HttpStatus.GONE, "Mã xác thực đã hết hạn");
+                    }
+                    throw new BusinessException(HttpStatus.BAD_REQUEST, "Mã xác thực không đúng");
+                });
 
         otpLog.setIsUsed(true);
         otpLogRepository.save(otpLog);
@@ -87,7 +99,7 @@ public class AuthService {
         customer.setFullName(request.getFullName());
         customer.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         customer.setIsActive(true);
-        
+
         customer = customerRepository.save(customer);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(customer.getPhoneNumber());
@@ -102,17 +114,17 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("CUSTOMER:" + request.getPhoneNumber(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(SecurityConstants.CUSTOMER_PREFIX + request.getPhoneNumber(), request.getPassword())
         );
 
         Customer customer = customerRepository.findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Tài khoản hoặc mật khẩu không chính xác."));
 
         if (!customer.getIsActive()) {
-            throw new RuntimeException("USER_BANNED");
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.");
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername("CUSTOMER:" + customer.getPhoneNumber());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(SecurityConstants.CUSTOMER_PREFIX + customer.getPhoneNumber());
         String accessToken = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
@@ -125,26 +137,26 @@ public class AuthService {
     @Transactional(transactionManager = "postgresTransactionManager")
     public void forgotPassword(ForgotPasswordRequest request) {
         Customer customer = customerRepository.findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Số điện thoại không tồn tại"));
 
         if (!customer.getIsActive()) {
-            throw new RuntimeException("USER_BANNED");
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.");
         }
 
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
         long count = otpLogRepository.countByPhoneNumberAndCreatedAtAfter(request.getPhoneNumber(), startOfDay);
         if (count >= 5) {
-            throw new RuntimeException("TOO_MANY_REQUESTS");
+            throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã vượt quá số lần nhận mã trong ngày.");
         }
 
         String otp = String.format("%06d", new Random().nextInt(999999));
-        
+
         OtpLog otpLog = new OtpLog();
         otpLog.setPhoneNumber(request.getPhoneNumber());
         otpLog.setOtpCode(otp);
         otpLog.setExpiresAt(LocalDateTime.now().plusSeconds(180));
         otpLog.setIsUsed(false);
-        
+
         otpLogRepository.save(otpLog);
 
         System.out.println("==================================================");
@@ -157,13 +169,13 @@ public class AuthService {
     public void resetPassword(ResetPasswordRequest request) {
         OtpLog otpLog = otpLogRepository.findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
                 request.getPhoneNumber(), request.getOtpCode(), LocalDateTime.now())
-                .orElseThrow(() -> new RuntimeException("INVALID_OTP"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Mã xác thực không đúng hoặc đã hết hạn"));
 
         otpLog.setIsUsed(true);
         otpLogRepository.save(otpLog);
 
         Customer customer = customerRepository.findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Số điện thoại không tồn tại"));
 
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         customerRepository.save(customer);

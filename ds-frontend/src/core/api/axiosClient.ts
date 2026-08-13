@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { message } from 'antd';
+import { STORAGE_KEYS } from '../constants/storageKeys';
 
 const axiosClient = axios.create({
   baseURL: 'http://localhost:8080/api/v1',
@@ -10,7 +11,8 @@ const axiosClient = axios.create({
 
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const isAdminRequest = config.url?.startsWith('/admin');
+    const token = localStorage.getItem(isAdminRequest ? STORAGE_KEYS.admin.accessToken : STORAGE_KEYS.customer.accessToken);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,7 +32,11 @@ axiosClient.interceptors.response.use(
     if (error.response?.status >= 500) {
        message.error(errorMessage);
     }
-    return Promise.reject(error.response?.data || error);
+    return Promise.reject({
+      ...(error.response?.data || {}),
+      status: error.response?.status,
+      message: errorMessage,
+    });
   }
 );
 
