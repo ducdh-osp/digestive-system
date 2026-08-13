@@ -8,10 +8,10 @@ import com.digestivesystem.dsbackend.application.dtos.request.ResetPasswordReque
 import com.digestivesystem.dsbackend.application.dtos.request.VerifyOtpRequest;
 import com.digestivesystem.dsbackend.application.dtos.response.AuthResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
-import com.digestivesystem.dsbackend.infrastructure.entities.postgres.Customer;
-import com.digestivesystem.dsbackend.infrastructure.entities.postgres.OtpLog;
-import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.CustomerRepository;
-import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.OtpLogRepository;
+import com.digestivesystem.dsbackend.domain.entities.Customer;
+import com.digestivesystem.dsbackend.domain.entities.OtpLog;
+import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
+import com.digestivesystem.dsbackend.domain.repositories.OtpLogRepository;
 import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -53,7 +53,7 @@ public class AuthService {
 
         // Limit spam: max 5 times a day
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-        long count = otpLogRepository.countByPhoneNumberAndCreatedAtAfter(request.getPhoneNumber(), startOfDay);
+        long count = otpLogRepository.countSince(request.getPhoneNumber(), startOfDay);
         if (count >= 5) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã vượt quá số lần nhận mã trong ngày.");
         }
@@ -77,12 +77,11 @@ public class AuthService {
 
     @Transactional(transactionManager = "postgresTransactionManager")
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
-        OtpLog otpLog = otpLogRepository.findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+        OtpLog otpLog = otpLogRepository.findActiveOtp(
                 request.getPhoneNumber(), request.getOtpCode(), LocalDateTime.now())
                 .orElseGet(() -> {
                     boolean matchesButExpired = otpLogRepository
-                            .findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseOrderByCreatedAtDesc(
-                                    request.getPhoneNumber(), request.getOtpCode())
+                            .findLatestUnusedOtp(request.getPhoneNumber(), request.getOtpCode())
                             .isPresent();
                     if (matchesButExpired) {
                         throw new BusinessException(HttpStatus.GONE, "Mã xác thực đã hết hạn");
@@ -144,7 +143,7 @@ public class AuthService {
         }
 
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-        long count = otpLogRepository.countByPhoneNumberAndCreatedAtAfter(request.getPhoneNumber(), startOfDay);
+        long count = otpLogRepository.countSince(request.getPhoneNumber(), startOfDay);
         if (count >= 5) {
             throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã vượt quá số lần nhận mã trong ngày.");
         }
@@ -167,7 +166,7 @@ public class AuthService {
 
     @Transactional(transactionManager = "postgresTransactionManager")
     public void resetPassword(ResetPasswordRequest request) {
-        OtpLog otpLog = otpLogRepository.findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+        OtpLog otpLog = otpLogRepository.findActiveOtp(
                 request.getPhoneNumber(), request.getOtpCode(), LocalDateTime.now())
                 .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Mã xác thực không đúng hoặc đã hết hạn"));
 

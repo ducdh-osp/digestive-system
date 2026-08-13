@@ -1,10 +1,10 @@
 package com.digestivesystem.dsbackend.infrastructure.services;
 
 import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
-import com.digestivesystem.dsbackend.infrastructure.entities.mysql.Admin;
-import com.digestivesystem.dsbackend.infrastructure.entities.postgres.Customer;
-import com.digestivesystem.dsbackend.infrastructure.repositories.mysql.AdminRepository;
-import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.CustomerRepository;
+import com.digestivesystem.dsbackend.domain.entities.Admin;
+import com.digestivesystem.dsbackend.domain.entities.Customer;
+import com.digestivesystem.dsbackend.domain.repositories.AdminRepository;
+import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

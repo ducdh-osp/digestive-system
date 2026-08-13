@@ -8,10 +8,10 @@ import com.digestivesystem.dsbackend.application.dtos.response.MedicalProfileRes
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileUpdateResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
-import com.digestivesystem.dsbackend.infrastructure.entities.postgres.Customer;
-import com.digestivesystem.dsbackend.infrastructure.entities.postgres.MedicalProfile;
-import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.CustomerRepository;
-import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.MedicalProfileRepository;
+import com.digestivesystem.dsbackend.domain.entities.Customer;
+import com.digestivesystem.dsbackend.domain.entities.MedicalProfile;
+import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
+import com.digestivesystem.dsbackend.domain.repositories.MedicalProfileRepository;
 import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -119,10 +119,10 @@ public class ProfileService {
     public MedicalProfileResponse updateMedicalProfile(UpdateMedicalProfileRequest request, Authentication authentication) {
         Customer customer = getCurrentCustomer(authentication);
 
-        MedicalProfile medicalProfile = medicalProfileRepository.findByCustomer(customer)
+        MedicalProfile medicalProfile = medicalProfileRepository.findByCustomerId(customer.getId())
                 .orElseGet(() -> {
                     MedicalProfile newProfile = new MedicalProfile();
-                    newProfile.setCustomer(customer);
+                    newProfile.setCustomerId(customer.getId());
                     return newProfile;
                 });
 
@@ -134,7 +134,7 @@ public class ProfileService {
     }
 
     private ProfileResponse buildProfileResponse(Customer customer) {
-        MedicalProfileResponse medicalResponse = medicalProfileRepository.findByCustomer(customer)
+        MedicalProfileResponse medicalResponse = medicalProfileRepository.findByCustomerId(customer.getId())
                 .map(this::buildMedicalResponse)
                 .orElse(new MedicalProfileResponse(null, null, null));
 

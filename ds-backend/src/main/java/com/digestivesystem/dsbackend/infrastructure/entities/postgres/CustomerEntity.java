@@ -8,31 +8,32 @@ import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "medical_profiles")
+@Table(name = "customers")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
-public class MedicalProfile {
+public class CustomerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false, unique = true)
-    private Customer customer;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
 
-    @Column(name = "height_cm", precision = 5, scale = 2)
-    private BigDecimal heightCm;
+    @Column(name = "phone_number", nullable = false, unique = true)
+    private String phoneNumber;
 
-    @Column(name = "weight_kg", precision = 5, scale = 2)
-    private BigDecimal weightKg;
+    @Column(unique = true)
+    private String email;
 
-    @Column(name = "medical_history")
-    private String medicalHistory;
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
