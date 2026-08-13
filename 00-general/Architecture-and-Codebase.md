@@ -27,17 +27,19 @@ Chứa các Use Case (Trường hợp sử dụng) cụ thể của ứng dụng
 
 ### 1.3. Lớp Miền (`domain`)
 Trái tim của phần mềm, chứa các logic nghiệp vụ cốt lõi không bao giờ thay đổi dù Framework hay Database có đổi. Không được phép phụ thuộc vào bất kỳ thư viện bên ngoài nào (như Spring Data, JPA).
-- **`entities/`**: Các Domain Entity, đại diện cho thực thể kinh doanh (Khác hoàn toàn với JPA Entity).
-- **`enums/`** & **`constant/`**: Hằng số và Enum cốt lõi của nghiệp vụ.
-- **`repositories/`**: Định nghĩa các Interface để giao tiếp với DB. (Lưu ý: Chỉ định nghĩa interface, phần code thực thi sẽ nằm ở `infrastructure`).
-- **`services/`**: Các Domain Service xử lý logic tinh vi liên quan tới nhiều Domain Entity.
-- **`projections/`**: Định nghĩa các class/interface để Read-Model (đọc dữ liệu nhanh, phục vụ cho `queries/`).
+- **`entities/`**: Đã có code — 5 Domain Entity thuần POJO (`Customer`, `OtpLog`, `Admin`, `Role`, `MedicalProfile`), chỉ dùng Lombok (không phải external framework, chỉ là compile-time boilerplate), **không có bất kỳ annotation JPA/Hibernate nào**. Khác hoàn toàn với JPA Entity cùng field ở `infrastructure/entities/{postgres|mysql}/*Entity.java` (đã đổi hậu tố `Entity` để tránh trùng tên khi import).
+- **`enums/`** & **`constant/`**: Hằng số và Enum cốt lõi của nghiệp vụ. Vẫn còn rỗng.
+- **`repositories/`**: Đã có code — 4 interface (`CustomerRepository`, `OtpLogRepository`, `AdminRepository`, `MedicalProfileRepository`), chỉ khai báo hợp đồng bằng Domain Entity, không import gì từ Spring Data/JPA. `AuthService`, `AdminAuthService`, `ProfileService`, `UserDetailsServiceImpl` giờ inject THẲNG các interface này — Spring tự autowire theo type xuống đúng class Impl ở `infrastructure` (Dependency Inversion đúng chuẩn Clean Architecture). Code thực thi nằm ở `infrastructure/repositories/{postgres|mysql}/*RepositoryImpl.java`.
+- **`services/`**: Các Domain Service xử lý logic tinh vi liên quan tới nhiều Domain Entity. Vẫn còn rỗng — các Service ở `application/services` hiện đã đủ xử lý logic của 1 Aggregate, chưa phát sinh nhu cầu tách riêng.
+- **`projections/`**: Vẫn còn rỗng.
 
 ### 1.4. Lớp Hạ tầng (`infrastructure`)
 Đảm nhiệm mọi thứ liên quan đến công nghệ cụ thể (Database, Redis, Security, API bên thứ 3).
 - **`config/`**: Cấu hình Spring Boot, DataSource (Multi-tenant MySQL & Postgres), Flyway. Riêng cấu hình bảo mật nằm ở subpackage **`config/security/`**: `SecurityConfig.java` (khai báo `SecurityFilterChain`, `PasswordEncoder`, `AuthenticationManager`) và `JwtAuthenticationFilter.java` (filter đọc/validate Bearer Token mỗi request).
-- **`entities/`**: Các class JPA (có `@Entity`, `@Table`) ánh xạ trực tiếp 1-1 với DB. Nơi đây chia ra `mysql/` (bảng Admin) và `postgres/` (bảng Customer).
-- **`repositories/`**: Các class/interface kế thừa `JpaRepository`. **Lưu ý thực tế:** ở các UC Xác thực (A.1/A.3) hiện tại, `application/services` (`AuthService`, `AdminAuthService`) gọi thẳng các Repository này, chưa đi qua lớp interface trung gian ở `domain/repositories` như lý thuyết Clean Architecture mô tả ở Mục 1.3 — đây là điểm cần lưu ý khi đọc code thật, không phải lỗi.
+- **`entities/`**: Các class JPA (có `@Entity`, `@Table`) ánh xạ trực tiếp 1-1 với DB, đặt tên hậu tố **`Entity`** (`CustomerEntity`, `OtpLogEntity`, `MedicalProfileEntity`, `AdminEntity`, `RoleEntity`) để phân biệt với Domain Entity cùng tên ở `domain/entities/`. Chia `mysql/` (Admin) và `postgres/` (Customer).
+- **`repositories/`**: 2 tầng con:
+  - ***Jpa Repository*** (`CustomerJpaRepository`, `OtpLogJpaRepository`, `MedicalProfileJpaRepository`, `AdminJpaRepository`) — interface Spring Data JPA thuần, kế thừa `JpaRepository<XxxEntity, ID>`, chỉ dùng nội bộ bởi Impl bên dưới, Service không gọi trực tiếp nữa.
+  - ***Repository Impl*** (`CustomerRepositoryImpl`, `OtpLogRepositoryImpl`, `MedicalProfileRepositoryImpl`, `AdminRepositoryImpl`) — class `implements` interface Domain tương ứng ở Mục 1.3, làm nhiệm vụ map qua lại Domain Entity ↔ JPA Entity. **Điểm quan trọng khi `save()`:** nếu Domain Entity truyền vào đã có `id`, Impl luôn `findById()` fetch lại entity JPA gốc trước rồi mới ghi đè field thay đổi lên đó (không dựng entity mới từ đầu) — tránh Hibernate merge một object "trắng" đè mất giá trị `createdAt` (`@CreationTimestamp`) của bản ghi đang update.
 - **`services/`**: Ngoài các service hạ tầng khác, đây là nơi chứa **`UserDetailsServiceImpl.java`** (không nằm ở `security/` như phiên bản tài liệu trước) — xử lý luồng Prefix Authentication (`ADMIN:`/`CUSTOMER:`), được cả `AuthService` và `AdminAuthService` gọi tới khi cần load `UserDetails`.
 - **`client/`**: Các FeignClient hoặc RestTemplate để gọi API ra các hệ thống bên ngoài.
 - **`file/`**: Logic upload/download file (như S3, Local Storage).
@@ -91,9 +93,10 @@ FE  modules/auth/pages/RegisterPage.tsx (onFinish, nút submit là shared/compon
  → core/api/axiosClient.ts                                    ← gắn Bearer nếu có + trả lỗi kèm `status`
  → (HTTP) BE api/controllers/AuthController.java (register)     ← không còn try/catch thủ công
  → application/services/AuthService.java (register)
-    → infrastructure/repositories/postgres/CustomerRepository (existsByPhoneNumber) — trùng → throw BusinessException(409)
-    → infrastructure/repositories/postgres/OtpLogRepository (countByPhoneNumberAndCreatedAtAfter, save) — quá 5 lần/ngày → throw BusinessException(429)
-    → infrastructure/entities/postgres/OtpLog                  ← ghi bảng otp_logs
+    → domain/repositories/CustomerRepository.java (existsByPhoneNumber) — trùng → throw BusinessException(409)
+       → infrastructure/repositories/postgres/CustomerRepositoryImpl.java → CustomerJpaRepository → infrastructure/entities/postgres/CustomerEntity
+    → domain/repositories/OtpLogRepository.java (countSince, save) — quá 5 lần/ngày → throw BusinessException(429)
+       → infrastructure/repositories/postgres/OtpLogRepositoryImpl.java → OtpLogJpaRepository → infrastructure/entities/postgres/OtpLogEntity   ← ghi bảng otp_logs
  ← application/exceptions/GlobalExceptionHandler.java bắt BusinessException (nếu có lỗi) → ApiResponse; thành công → AuthController trả ApiResponse<String> (200)
 FE ← RegisterPage.tsx → navigate('/verify-otp', {state: payload})   (chưa gọi tới VerifyOtpPage.tsx, chỉ điều hướng)
 ```
@@ -104,9 +107,10 @@ FE  modules/auth/pages/VerifyOtpPage.tsx (onFinish; nút "Gửi lại mã" là P
  → modules/auth/api/authApi.ts (verifyOtp) → core/api/axiosClient.ts
  → (HTTP) BE api/controllers/AuthController.java (verifyOtp)
  → application/services/AuthService.java (verifyOtp)
-    → infrastructure/repositories/postgres/OtpLogRepository (tìm OTP hợp lệ; nếu hết hạn → query phụ → throw BusinessException(410) OTP_EXPIRED hoặc (400) INVALID_OTP)
-    → infrastructure/repositories/postgres/CustomerRepository (save)          ← TẠO Customer thật ở bước này
-    → infrastructure/entities/postgres/Customer, OtpLog
+    → domain/repositories/OtpLogRepository.java (findActiveOtp; nếu hết hạn → findLatestUnusedOtp để phân biệt) — throw BusinessException(410) OTP_EXPIRED hoặc (400) INVALID_OTP
+       → infrastructure/repositories/postgres/OtpLogRepositoryImpl.java → OtpLogJpaRepository → infrastructure/entities/postgres/OtpLogEntity
+    → domain/repositories/CustomerRepository.java (save)          ← TẠO domain Customer thật ở bước này
+       → infrastructure/repositories/postgres/CustomerRepositoryImpl.java → CustomerJpaRepository → infrastructure/entities/postgres/CustomerEntity
     → infrastructure/services/UserDetailsServiceImpl.java (loadUserByUsername, không prefix → tự suy ra application/constants/SecurityConstants.CUSTOMER_PREFIX)
     → application/services/JwtService.java (generateToken, generateRefreshToken)
  ← lỗi (nếu có) → application/exceptions/GlobalExceptionHandler.java; thành công → AuthController trả AuthResponse (200)
@@ -122,10 +126,10 @@ FE  modules/auth/pages/LoginPage.tsx (onFinish, PrimaryButton)
  → application/services/AuthService.java (login)
     → application/constants/SecurityConstants.CUSTOMER_PREFIX + AuthenticationManager.authenticate(phone, password)
        → infrastructure/services/UserDetailsServiceImpl.java (loadUserByUsername, prefix CUSTOMER:)
-          → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber)
-          → infrastructure/entities/postgres/Customer                 ← so BCrypt password_hash
+          → domain/repositories/CustomerRepository.java (findByPhoneNumber)
+             → infrastructure/repositories/postgres/CustomerRepositoryImpl.java → CustomerJpaRepository → infrastructure/entities/postgres/CustomerEntity  ← so BCrypt password_hash
        (sai tài khoản/mật khẩu → AuthenticationException → application/exceptions/GlobalExceptionHandler.java → 401)
-    → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber lại, check isActive) — banned → throw BusinessException(403)
+    → domain/repositories/CustomerRepository.java (findByPhoneNumber lại, check isActive) — banned → throw BusinessException(403)
     → application/services/JwtService.java (generateToken, generateRefreshToken)
  ← AuthController trả AuthResponse (200)
 FE ← LoginPage.tsx lưu localStorage qua STORAGE_KEYS.customer.* → navigate('/')
@@ -137,8 +141,8 @@ FE  modules/auth/pages/ForgotPasswordPage.tsx (onFinish, PrimaryButton)
  → modules/auth/api/authApi.ts (forgotPassword) → core/api/axiosClient.ts
  → (HTTP) BE api/controllers/AuthController.java (forgotPassword)
  → application/services/AuthService.java (forgotPassword)
-    → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber, check isActive) — not found/banned → BusinessException(404/403)
-    → infrastructure/repositories/postgres/OtpLogRepository (rate-limit + save OTP mới) — quá hạn mức → BusinessException(429)
+    → domain/repositories/CustomerRepository.java (findByPhoneNumber, check isActive) — not found/banned → BusinessException(404/403)
+    → domain/repositories/OtpLogRepository.java (countSince + save OTP mới) — quá hạn mức → BusinessException(429)
  ← 200, hoặc lỗi qua GlobalExceptionHandler
 FE ← navigate('/reset-password', {state: {phoneNumber}})
 
@@ -146,8 +150,8 @@ FE  modules/auth/pages/ResetPasswordPage.tsx (onFinish, PrimaryButton)
  → modules/auth/api/authApi.ts (resetPassword) → core/api/axiosClient.ts
  → (HTTP) BE api/controllers/AuthController.java (resetPassword)
  → application/services/AuthService.java (resetPassword)
-    → infrastructure/repositories/postgres/OtpLogRepository (tìm OTP hợp lệ, đánh dấu used) — sai/hết hạn → BusinessException(400)
-    → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber, save password_hash mới)
+    → domain/repositories/OtpLogRepository.java (findActiveOtp, đánh dấu used) — sai/hết hạn → BusinessException(400)
+    → domain/repositories/CustomerRepository.java (findByPhoneNumber, save password_hash mới)
  ← 200, hoặc lỗi qua GlobalExceptionHandler
 FE ← navigate('/login')                                          ← KHÔNG tự đăng nhập lại, không sinh token
 ```
@@ -161,10 +165,10 @@ FE  modules/admin-auth/pages/AdminLoginPage.tsx (onFinish, PrimaryButton color="
  → application/services/AdminAuthService.java (login)
     → application/constants/SecurityConstants.ADMIN_PREFIX + AuthenticationManager.authenticate(username, password)
        → infrastructure/services/UserDetailsServiceImpl.java (loadUserByUsername, prefix ADMIN:)
-          → infrastructure/repositories/mysql/AdminRepository (findByUsernameOrEmail)
-          → infrastructure/entities/mysql/Admin, Role              ← so BCrypt password_hash, lấy role_name
+          → domain/repositories/AdminRepository.java (findByUsernameOrEmail)
+             → infrastructure/repositories/mysql/AdminRepositoryImpl.java → AdminJpaRepository → infrastructure/entities/mysql/AdminEntity, RoleEntity  ← so BCrypt password_hash, lấy role_name
        (sai tài khoản/mật khẩu → AuthenticationException → GlobalExceptionHandler → 401)
-    → infrastructure/repositories/mysql/AdminRepository (findByUsernameOrEmail lại, check isActive) — banned → throw BusinessException(403)
+    → domain/repositories/AdminRepository.java (findByUsernameOrEmail lại, check isActive) — banned → throw BusinessException(403)
     → application/services/JwtService.java (generateToken, generateRefreshToken)
  ← AdminAuthController trả AdminAuthResponse (200)
 FE ← AdminLoginPage.tsx lưu localStorage qua STORAGE_KEYS.admin.*
@@ -173,6 +177,7 @@ FE ← AdminLoginPage.tsx lưu localStorage qua STORAGE_KEYS.admin.*
 
 ### Hạ tầng dùng chung — mọi UC ở trên đều đi qua đây ít nhất 1 lần
 ```
+domain/repositories/*.java (interface) + infrastructure/repositories/{postgres|mysql}/*RepositoryImpl.java  ← Service KHÔNG còn đụng JPA Repository trực tiếp; mọi truy vấn DB đi qua interface Domain trước, Spring tự autowire xuống đúng Impl (Dependency Inversion — đúng chuẩn Clean Architecture, xem Mục 1.3/1.4)
 infrastructure/config/security/SecurityConfig.java              ← khai báo permitAll cho /api/v1/auth/** và /api/v1/admin/auth/**, PasswordEncoder (BCrypt), AuthenticationManager
 infrastructure/config/security/JwtAuthenticationFilter.java     ← chặn TRƯỚC UsernamePasswordAuthenticationFilter, validate Bearer Token cho các API cần đăng nhập (đọc lại qua UserDetailsServiceImpl + JwtService)
 infrastructure/services/UserDetailsServiceImpl.java             ← 1 class DÙNG CHUNG cho cả Admin lẫn Customer, phân biệt bằng prefix ADMIN:/CUSTOMER: (application/constants/SecurityConstants.java)
@@ -183,4 +188,4 @@ shared/hooks/useAuth.ts + shared/components/Button/              ← useCustomer
 ```
 
 > [!TIP]
-> *Mẹo tra cứu nhanh: mọi Controller nằm ở `api/controllers/`, mọi Service nghiệp vụ nằm ở `application/services/`, mọi thứ đụng tới DB thật (Entity/Repository JPA) nằm ở `infrastructure/entities|repositories/{mysql|postgres}/`, mọi thứ đụng tới Spring Security nằm ở `infrastructure/config/security/` (config/filter) hoặc `infrastructure/services/UserDetailsServiceImpl.java` (load user). Phía FE: cứ theo đúng thứ tự `modules/<tên module>/pages/ → modules/<tên module>/api/ → core/api/axiosClient.ts`.*
+> *Mẹo tra cứu nhanh: mọi Controller nằm ở `api/controllers/`, mọi Service nghiệp vụ nằm ở `application/services/`. Muốn biết Service thao tác DB kiểu gì — xem interface ở `domain/repositories/` trước (method name + tham số Domain Entity), rồi mới lần xuống bản Impl thật ở `infrastructure/repositories/{mysql|postgres}/*RepositoryImpl.java` (nơi có logic map Entity↔Domain và query JPA thật qua `*JpaRepository`). Mọi thứ đụng tới Spring Security nằm ở `infrastructure/config/security/` (config/filter) hoặc `infrastructure/services/UserDetailsServiceImpl.java` (load user). Phía FE: cứ theo đúng thứ tự `modules/<tên module>/pages/ → modules/<tên module>/api/ → core/api/axiosClient.ts`.*
