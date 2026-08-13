@@ -20,9 +20,10 @@ Chứa các Use Case (Trường hợp sử dụng) cụ thể của ứng dụng
 - **`dtos/`**: Data Transfer Object. Lớp vỏ bọc dữ liệu để giao tiếp với Client (Request/Response).
 - **`services/`**: Các Application Service để điều phối luồng chạy (Ví dụ: `AuthService`, `JwtService`).
 - **`events/`** & **`listener/`**: Các Event nội bộ của ứng dụng và các Listener lắng nghe các Event đó.
-- **`exceptions/`**: Các Exception riêng biệt của tầng Application.
+- **`exceptions/`**: Đã có code — **`BusinessException.java`** (RuntimeException mang sẵn `HttpStatus` + message hiển thị cho FE) và **`GlobalExceptionHandler.java`** (`@RestControllerAdvice`, bắt `BusinessException`/`AuthenticationException`/`MethodArgumentNotValidException` và format thống nhất về `ApiResponse`). Mọi Service (`AuthService`, `AdminAuthService`, `ProfileService`) throw thẳng `BusinessException` thay vì `RuntimeException("CODE")`; Controller không còn `try/catch` thủ công — xem Mục 3.
 - **`mappers/`**: Các class/interface dùng để map dữ liệu giữa Entity và DTO (thường dùng MapStruct).
-- **`annotation/`, `config/`, `constants/`, `enums/`, `helpers/`, `utils/`**: Các hằng số, cấu hình, và hàm tiện ích phục vụ riêng cho tầng Application.
+- **`constants/`**: Đã có code — **`SecurityConstants.java`** (`CUSTOMER_PREFIX`, `ADMIN_PREFIX`) dùng chung cho `AuthService`, `AdminAuthService`, `ProfileService`, `UserDetailsServiceImpl` thay vì hardcode chuỗi `"CUSTOMER:"`/`"ADMIN:"` rải rác nhiều nơi.
+- **`annotation/`, `config/`, `enums/`, `helpers/`, `utils/`**: Vẫn còn rỗng, chuẩn bị cho tương lai.
 
 ### 1.3. Lớp Miền (`domain`)
 Trái tim của phần mềm, chứa các logic nghiệp vụ cốt lõi không bao giờ thay đổi dù Framework hay Database có đổi. Không được phép phụ thuộc vào bất kỳ thư viện bên ngoài nào (như Spring Data, JPA).
@@ -34,10 +35,10 @@ Trái tim của phần mềm, chứa các logic nghiệp vụ cốt lõi không 
 
 ### 1.4. Lớp Hạ tầng (`infrastructure`)
 Đảm nhiệm mọi thứ liên quan đến công nghệ cụ thể (Database, Redis, Security, API bên thứ 3).
-- **`config/`**: Cấu hình Spring Boot, DataSource (Multi-tenant MySQL & Postgres), Flyway.
+- **`config/`**: Cấu hình Spring Boot, DataSource (Multi-tenant MySQL & Postgres), Flyway. Riêng cấu hình bảo mật nằm ở subpackage **`config/security/`**: `SecurityConfig.java` (khai báo `SecurityFilterChain`, `PasswordEncoder`, `AuthenticationManager`) và `JwtAuthenticationFilter.java` (filter đọc/validate Bearer Token mỗi request).
 - **`entities/`**: Các class JPA (có `@Entity`, `@Table`) ánh xạ trực tiếp 1-1 với DB. Nơi đây chia ra `mysql/` (bảng Admin) và `postgres/` (bảng Customer).
-- **`repositories/`**: Các class/interface kế thừa `JpaRepository`, code thực thi (implement) cho các Interface định nghĩa ở tầng `domain`. 
-- **`security/`**: Cấu hình Spring Security, JwtFilter, và logic cấp quyền (`UserDetailsServiceImpl.java` xử lý luồng Prefix Authentication).
+- **`repositories/`**: Các class/interface kế thừa `JpaRepository`. **Lưu ý thực tế:** ở các UC Xác thực (A.1/A.3) hiện tại, `application/services` (`AuthService`, `AdminAuthService`) gọi thẳng các Repository này, chưa đi qua lớp interface trung gian ở `domain/repositories` như lý thuyết Clean Architecture mô tả ở Mục 1.3 — đây là điểm cần lưu ý khi đọc code thật, không phải lỗi.
+- **`services/`**: Ngoài các service hạ tầng khác, đây là nơi chứa **`UserDetailsServiceImpl.java`** (không nằm ở `security/` như phiên bản tài liệu trước) — xử lý luồng Prefix Authentication (`ADMIN:`/`CUSTOMER:`), được cả `AuthService` và `AdminAuthService` gọi tới khi cần load `UserDetails`.
 - **`client/`**: Các FeignClient hoặc RestTemplate để gọi API ra các hệ thống bên ngoài.
 - **`file/`**: Logic upload/download file (như S3, Local Storage).
 - **`converters/`**, **`eventhandlers/`**, **`helpers/`**, **`listeners/`**, **`models/`**, **`services/`**: Các tiện ích, xử lý event hệ thống và service phụ trợ của hạ tầng (như EmailService, SmsService).
@@ -54,11 +55,12 @@ Trái tim của phần mềm, chứa các logic nghiệp vụ cốt lõi không 
   - `styles/`: CSS toàn cục, Tailwind Config.
 - **`core/`**: Cấu hình nền tảng.
   - `api/`: Cấu hình `axiosClient.ts`, tự động gắn Token và bắt lỗi.
-  - `constants/`, `exceptions/`, `utils/`: Hằng số, hàm xử lý lỗi, tiện ích cốt lõi của app.
+  - `constants/`: Đã có code — **`storageKeys.ts`** (`STORAGE_KEYS.customer.*` / `STORAGE_KEYS.admin.*`) tập trung toàn bộ tên key `localStorage`, tránh hardcode chuỗi `'accessToken'`/`'adminAccessToken'`... rải rác từng trang (từng gây bug sai key ở `axiosClient.ts`).
+  - `exceptions/`, `utils/`: Vẫn còn rỗng, chuẩn bị cho tương lai.
 - **`assets/`**: Chứa ảnh, icon dùng toàn cục ở cấp độ App (như logo `hero.png`, SVG React).
 
 ### 2.2. Các Tính năng (`modules/`)
-Nơi chia mã nguồn theo từng **Tính năng** độc lập. Hiện tại gồm `auth`, `admin-auth`, `admin`. Cấu trúc quy chuẩn bên trong mỗi module:
+Nơi chia mã nguồn theo từng **Tính năng** độc lập. Hiện tại gồm `auth`, `admin-auth`, `admin`, `profile` (module `profile` chưa được đưa vào bản đồ luồng ở Mục 3 — xem ghi chú tại đó). Cấu trúc quy chuẩn bên trong mỗi module:
 - **`pages/`**: Các component đại diện cho 1 trang màn hình hoàn chỉnh (vd: `LoginPage.tsx`, `AdminDashboardPage.tsx`).
 - **`api/`**: Nơi chứa các hàm Axios call API của riêng module đó (vd: `authApi.ts`).
 - **`types/`**: (Nếu có) Định nghĩa Interface/Type cho Typescript.
@@ -67,19 +69,118 @@ Nơi chia mã nguồn theo từng **Tính năng** độc lập. Hiện tại g�
 ### 2.3. Lớp Dùng chung (`shared/`)
 Chứa các thành phần được sử dụng lại ở nhiều Module khác nhau, tránh lặp code.
 - **`layouts/`**: Các khung bao bọc trang (vd: `AuthLayout.tsx` quy định hình ảnh background dùng chung cho mọi trang đăng nhập).
-- **`components/`**: Các Button, Input, Modal dùng chung toàn hệ thống.
-- **`hooks/`**: Các Custom Hook phổ quát (như `useWindowSize`, `useAuth`).
+- **`components/`**: Đã có code — thư mục **`Button/`** gồm `PrimaryButton.tsx` (nút submit chính, `color="blue"|"indigo"`, `variant="solid"|"outline"`, `fullWidth`) và `LogoutButton.tsx` (`theme="onColor"|"onLight"`), export qua `Button/index.ts`. Áp dụng ở toàn bộ trang Auth, AdminLogin, ProfilePage, và 2 header (Customer/Admin). `Input`/`Modal` dùng chung vẫn chưa có, để dành khi cần.
+- **`hooks/`**: Đã có code — **`useAuth.ts`** export `useCustomerAuth()` và `useAdminAuth()`, mỗi hook trả về `{ token, user/admin, isAuthenticated, logout }`, đọc/ghi qua `STORAGE_KEYS` (không đọc thẳng `localStorage` bằng chuỗi cứng nữa). Áp dụng ở `ProtectedRoute` (`app/routes/index.tsx`), `AdminDashboardPage.tsx`, và phần logout/hết-phiên của `ProfilePage.tsx`.
 - **`assets/`**: Ảnh/icon phụ trợ.
 
 ---
 
-## 3. Luồng hoạt động (Workflow) thực tế
-Lấy ví dụ với tính năng **Đăng nhập Quản trị viên (CMS)**, luồng chảy dữ liệu sẽ đi qua các lớp như sau:
+## 3. Bản đồ điều hướng Package/File theo từng UC (đã code, đã verify trực tiếp trong source)
 
-1. **(FE - Router):** Gõ `localhost:5173/admin/login`, `app/routes/index.tsx` điều hướng mở trang `<AdminLoginPage />` (nằm trong `modules/admin-auth/pages`).
-2. **(FE - Component & Core):** Điền form, Submit. Hàm `adminAuthApi.login(data)` gọi qua `axiosClient` (`core/api`) để bắn POST Request tới BE.
-3. **(BE - API Layer):** Lớp `api/controllers/AdminAuthController.java` bắt Request, ép kiểu thành `AdminLoginRequest` (nằm ở `application/dtos/request`).
-4. **(BE - Application Layer):** Controller chuyển dữ liệu cho `AdminAuthService.java` (nằm ở `application/services`).
-5. **(BE - Infrastructure/Security):** Service yêu cầu `authenticationManager` xác thực kèm Prefix `"ADMIN:admin"`. Class `UserDetailsServiceImpl.java` (trong `infrastructure/security`) tiếp nhận.
-6. **(BE - DB Access):** `UserDetailsServiceImpl` nhận diện tiền tố ADMIN, gọi xuống `AdminRepository` (tại `infrastructure/repositories/mysql`), map vào JPA Entity `Admin.java` (tại `infrastructure/entities/mysql`) để kéo dữ liệu từ DB lên so sánh mật khẩu BCrypt.
-7. **(BE -> FE):** Thành công, `JwtService` sinh Access Token, Controller trả về `AdminAuthResponse`. Frontend nhận JSON, lưu vào `localStorage` và chuyển hướng vào `/admin/dashboard`. Màn hình Dashboard load lên!
+Mục đích của mục này: khi cần tìm/debug một UC, biết ngay **code nhảy từ file nào sang file nào, package nào sang package nào** mà không phải grep lại từ đầu. Chỉ liệt kê các UC đã có code **và đã verify chạy đúng qua test runtime thật** (module **A.1. Xác thực tài khoản người dùng** và **A.3. Xác thực tài khoản CMS**).
+
+> [!NOTE]
+> *Module **A.2. Quản lý Hồ sơ Cá nhân** đã có code cả Backend (`ProfileController`/`ProfileService`, đã test runtime đầy đủ) lẫn Frontend (`ProfilePage.tsx`), nhưng phần Frontend chưa được chạy thử/verify trên trình duyệt nên tạm **chưa đưa vào bản đồ này** — sẽ bổ sung một mục A.2.x riêng khi FE được xác nhận chạy ổn định. E.1/E.2 vẫn mới chỉ là tài liệu đặc tả, chưa có code.*
+
+Quy ước mũi tên: `Package/File` **→** `Package/File`. Toàn bộ path Backend đều nằm dưới gốc package `com.digestivesystem.dsbackend.*` (viết tắt bỏ phần gốc cho gọn); path Frontend đều tương đối theo `ds-frontend/src/`.
+
+### A.1.1 — Đăng ký (`POST /auth/register`)
+```
+FE  modules/auth/pages/RegisterPage.tsx (onFinish, nút submit là shared/components/Button/PrimaryButton.tsx)
+ → modules/auth/api/authApi.ts (register)
+ → core/api/axiosClient.ts                                    ← gắn Bearer nếu có + trả lỗi kèm `status`
+ → (HTTP) BE api/controllers/AuthController.java (register)     ← không còn try/catch thủ công
+ → application/services/AuthService.java (register)
+    → infrastructure/repositories/postgres/CustomerRepository (existsByPhoneNumber) — trùng → throw BusinessException(409)
+    → infrastructure/repositories/postgres/OtpLogRepository (countByPhoneNumberAndCreatedAtAfter, save) — quá 5 lần/ngày → throw BusinessException(429)
+    → infrastructure/entities/postgres/OtpLog                  ← ghi bảng otp_logs
+ ← application/exceptions/GlobalExceptionHandler.java bắt BusinessException (nếu có lỗi) → ApiResponse; thành công → AuthController trả ApiResponse<String> (200)
+FE ← RegisterPage.tsx → navigate('/verify-otp', {state: payload})   (chưa gọi tới VerifyOtpPage.tsx, chỉ điều hướng)
+```
+
+### A.1.2 — Xác thực OTP (`POST /auth/verify-otp`)
+```
+FE  modules/auth/pages/VerifyOtpPage.tsx (onFinish; nút "Gửi lại mã" là PrimaryButton variant="outline")
+ → modules/auth/api/authApi.ts (verifyOtp) → core/api/axiosClient.ts
+ → (HTTP) BE api/controllers/AuthController.java (verifyOtp)
+ → application/services/AuthService.java (verifyOtp)
+    → infrastructure/repositories/postgres/OtpLogRepository (tìm OTP hợp lệ; nếu hết hạn → query phụ → throw BusinessException(410) OTP_EXPIRED hoặc (400) INVALID_OTP)
+    → infrastructure/repositories/postgres/CustomerRepository (save)          ← TẠO Customer thật ở bước này
+    → infrastructure/entities/postgres/Customer, OtpLog
+    → infrastructure/services/UserDetailsServiceImpl.java (loadUserByUsername, không prefix → tự suy ra application/constants/SecurityConstants.CUSTOMER_PREFIX)
+    → application/services/JwtService.java (generateToken, generateRefreshToken)
+ ← lỗi (nếu có) → application/exceptions/GlobalExceptionHandler.java; thành công → AuthController trả AuthResponse (200)
+FE ← VerifyOtpPage.tsx lưu localStorage qua core/constants/storageKeys.ts (STORAGE_KEYS.customer.*) → navigate('/')
+ → app/routes/index.tsx (ProtectedRoute) dùng shared/hooks/useAuth.ts (useCustomerAuth) để đọc token/user + render Trang chủ, nút Đăng xuất là shared/components/Button/LogoutButton.tsx
+```
+
+### A.1.3 — Đăng nhập (`POST /auth/login`)
+```
+FE  modules/auth/pages/LoginPage.tsx (onFinish, PrimaryButton)
+ → modules/auth/api/authApi.ts (login) → core/api/axiosClient.ts
+ → (HTTP) BE api/controllers/AuthController.java (login)
+ → application/services/AuthService.java (login)
+    → application/constants/SecurityConstants.CUSTOMER_PREFIX + AuthenticationManager.authenticate(phone, password)
+       → infrastructure/services/UserDetailsServiceImpl.java (loadUserByUsername, prefix CUSTOMER:)
+          → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber)
+          → infrastructure/entities/postgres/Customer                 ← so BCrypt password_hash
+       (sai tài khoản/mật khẩu → AuthenticationException → application/exceptions/GlobalExceptionHandler.java → 401)
+    → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber lại, check isActive) — banned → throw BusinessException(403)
+    → application/services/JwtService.java (generateToken, generateRefreshToken)
+ ← AuthController trả AuthResponse (200)
+FE ← LoginPage.tsx lưu localStorage qua STORAGE_KEYS.customer.* → navigate('/')
+```
+
+### A.1.4 — Quên mật khẩu → Đặt lại mật khẩu (`POST /auth/forgot-password` rồi `POST /auth/reset-password`)
+```
+FE  modules/auth/pages/ForgotPasswordPage.tsx (onFinish, PrimaryButton)
+ → modules/auth/api/authApi.ts (forgotPassword) → core/api/axiosClient.ts
+ → (HTTP) BE api/controllers/AuthController.java (forgotPassword)
+ → application/services/AuthService.java (forgotPassword)
+    → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber, check isActive) — not found/banned → BusinessException(404/403)
+    → infrastructure/repositories/postgres/OtpLogRepository (rate-limit + save OTP mới) — quá hạn mức → BusinessException(429)
+ ← 200, hoặc lỗi qua GlobalExceptionHandler
+FE ← navigate('/reset-password', {state: {phoneNumber}})
+
+FE  modules/auth/pages/ResetPasswordPage.tsx (onFinish, PrimaryButton)
+ → modules/auth/api/authApi.ts (resetPassword) → core/api/axiosClient.ts
+ → (HTTP) BE api/controllers/AuthController.java (resetPassword)
+ → application/services/AuthService.java (resetPassword)
+    → infrastructure/repositories/postgres/OtpLogRepository (tìm OTP hợp lệ, đánh dấu used) — sai/hết hạn → BusinessException(400)
+    → infrastructure/repositories/postgres/CustomerRepository (findByPhoneNumber, save password_hash mới)
+ ← 200, hoặc lỗi qua GlobalExceptionHandler
+FE ← navigate('/login')                                          ← KHÔNG tự đăng nhập lại, không sinh token
+```
+
+### A.3.1 — Đăng nhập Admin CMS (`POST /admin/auth/login`)
+```
+FE  modules/admin-auth/pages/AdminLoginPage.tsx (onFinish, PrimaryButton color="indigo")
+ → modules/admin-auth/api/adminAuthApi.ts (login)
+ → core/api/axiosClient.ts                                    ← url bắt đầu "/admin" → tự gắn STORAGE_KEYS.admin.accessToken (không phải accessToken)
+ → (HTTP) BE api/controllers/AdminAuthController.java (login)
+ → application/services/AdminAuthService.java (login)
+    → application/constants/SecurityConstants.ADMIN_PREFIX + AuthenticationManager.authenticate(username, password)
+       → infrastructure/services/UserDetailsServiceImpl.java (loadUserByUsername, prefix ADMIN:)
+          → infrastructure/repositories/mysql/AdminRepository (findByUsernameOrEmail)
+          → infrastructure/entities/mysql/Admin, Role              ← so BCrypt password_hash, lấy role_name
+       (sai tài khoản/mật khẩu → AuthenticationException → GlobalExceptionHandler → 401)
+    → infrastructure/repositories/mysql/AdminRepository (findByUsernameOrEmail lại, check isActive) — banned → throw BusinessException(403)
+    → application/services/JwtService.java (generateToken, generateRefreshToken)
+ ← AdminAuthController trả AdminAuthResponse (200)
+FE ← AdminLoginPage.tsx lưu localStorage qua STORAGE_KEYS.admin.*
+ → navigate('/admin/dashboard') → app/routes/index.tsx → modules/admin/pages/AdminDashboardPage.tsx dùng shared/hooks/useAuth.ts (useAdminAuth) để check token + render, nút Đăng xuất là LogoutButton (chưa check role)
+```
+
+### Hạ tầng dùng chung — mọi UC ở trên đều đi qua đây ít nhất 1 lần
+```
+infrastructure/config/security/SecurityConfig.java              ← khai báo permitAll cho /api/v1/auth/** và /api/v1/admin/auth/**, PasswordEncoder (BCrypt), AuthenticationManager
+infrastructure/config/security/JwtAuthenticationFilter.java     ← chặn TRƯỚC UsernamePasswordAuthenticationFilter, validate Bearer Token cho các API cần đăng nhập (đọc lại qua UserDetailsServiceImpl + JwtService)
+infrastructure/services/UserDetailsServiceImpl.java             ← 1 class DÙNG CHUNG cho cả Admin lẫn Customer, phân biệt bằng prefix ADMIN:/CUSTOMER: (application/constants/SecurityConstants.java)
+application/services/JwtService.java                            ← 1 class DÙNG CHUNG để sign/verify JWT cho cả 2 tác nhân, TTL access=1h, refresh=7 ngày
+application/exceptions/BusinessException.java + GlobalExceptionHandler.java  ← mọi lỗi nghiệp vụ ở AuthService/AdminAuthService/ProfileService throw thẳng BusinessException, Controller không còn try/catch; GlobalExceptionHandler format chung về ApiResponse (kèm bắt AuthenticationException và MethodArgumentNotValidException)
+core/api/axiosClient.ts                                         ← 1 instance axios DÙNG CHUNG cho toàn FE, tự chọn token theo URL (core/constants/storageKeys.ts), tự lộ HTTP status ra ngoài cho các page catch(error)
+shared/hooks/useAuth.ts + shared/components/Button/              ← useCustomerAuth/useAdminAuth (đọc/ghi qua STORAGE_KEYS, có sẵn logout()) và PrimaryButton/LogoutButton, dùng chung ở mọi trang Auth/Admin/Profile
+```
+
+> [!TIP]
+> *Mẹo tra cứu nhanh: mọi Controller nằm ở `api/controllers/`, mọi Service nghiệp vụ nằm ở `application/services/`, mọi thứ đụng tới DB thật (Entity/Repository JPA) nằm ở `infrastructure/entities|repositories/{mysql|postgres}/`, mọi thứ đụng tới Spring Security nằm ở `infrastructure/config/security/` (config/filter) hoặc `infrastructure/services/UserDetailsServiceImpl.java` (load user). Phía FE: cứ theo đúng thứ tự `modules/<tên module>/pages/ → modules/<tên module>/api/ → core/api/axiosClient.ts`.*

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, message } from 'antd';
+import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import type { LoginRequest } from '../types';
+import { PrimaryButton } from '../../../shared/components/Button';
+import { STORAGE_KEYS } from '../../../core/constants/storageKeys';
 
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -15,9 +17,9 @@ const LoginPage: React.FC = () => {
       setLoading(true);
       const response = await authApi.login(values);
       if (response.success && response.data) {
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem(STORAGE_KEYS.customer.accessToken, response.data.accessToken);
+        localStorage.setItem(STORAGE_KEYS.customer.refreshToken, response.data.refreshToken);
+        localStorage.setItem(STORAGE_KEYS.customer.user, JSON.stringify(response.data.user));
         message.success('Đăng nhập thành công!');
         navigate('/');
       }
@@ -93,14 +95,9 @@ const LoginPage: React.FC = () => {
         </div>
 
         <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 h-12 rounded-lg font-semibold text-base transition-all shadow-md hover:shadow-lg"
-          >
+          <PrimaryButton htmlType="submit" loading={loading}>
             ĐĂNG NHẬP
-          </Button>
+          </PrimaryButton>
         </Form.Item>
 
         <div className="text-center text-gray-600 mt-6">

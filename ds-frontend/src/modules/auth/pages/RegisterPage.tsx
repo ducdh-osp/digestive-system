@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, message } from 'antd';
+import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import type { RegisterRequest } from '../types';
+import { PrimaryButton } from '../../../shared/components/Button';
 
 const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -122,14 +123,9 @@ const RegisterPage: React.FC = () => {
         </Form.Item>
 
         <Form.Item className="mt-8">
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 h-12 rounded-lg font-semibold text-base transition-all shadow-md hover:shadow-lg"
-          >
+          <PrimaryButton htmlType="submit" loading={loading}>
             ĐĂNG KÝ
-          </Button>
+          </PrimaryButton>
         </Form.Item>
 
         <div className="text-center text-gray-600">

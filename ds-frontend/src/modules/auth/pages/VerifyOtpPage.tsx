@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, message, Input } from 'antd';
+import { message, Input } from 'antd';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import type { RegisterRequest, VerifyOtpRequest } from '../types';
+import { PrimaryButton } from '../../../shared/components/Button';
+import { STORAGE_KEYS } from '../../../core/constants/storageKeys';
 
 const VerifyOtpPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -62,9 +64,9 @@ const VerifyOtpPage: React.FC = () => {
       
       const response = await authApi.verifyOtp(payload);
       if (response.success && response.data) {
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem(STORAGE_KEYS.customer.accessToken, response.data.accessToken);
+        localStorage.setItem(STORAGE_KEYS.customer.refreshToken, response.data.refreshToken);
+        localStorage.setItem(STORAGE_KEYS.customer.user, JSON.stringify(response.data.user));
         message.success('Xác thực và đăng nhập thành công!');
         navigate('/');
       }
@@ -110,14 +112,13 @@ const VerifyOtpPage: React.FC = () => {
         </span>
       </div>
 
-      <Button
-        type="default"
+      <PrimaryButton
+        variant="outline"
         onClick={handleResendOtp}
         disabled={timeLeft > 0 || loading}
-        className="w-full h-12 rounded-lg font-semibold text-base"
       >
         Gửi lại mã
-      </Button>
+      </PrimaryButton>
     </div>
   );
 };

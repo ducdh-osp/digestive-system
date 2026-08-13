@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { STORAGE_KEYS } from '../../../core/constants/storageKeys';
+
 import type {
   ApiResponse,
   ChangePasswordRequest,
@@ -13,7 +15,7 @@ import type {
 const API_URL = 'http://localhost:8080/api/v1/profile';
 
 const getAuthConfig = () => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem(STORAGE_KEYS.customer.accessToken);
 
   return {
     headers: {
@@ -48,15 +50,15 @@ export const profileApi = {
     // phone number nằm trong JWT subject.
     // Nếu đổi phone backend trả token mới.
     if (result.accessToken) {
-      localStorage.setItem('accessToken', result.accessToken);
+      localStorage.setItem(STORAGE_KEYS.customer.accessToken, result.accessToken);
     }
 
     if (result.refreshToken) {
-      localStorage.setItem('refreshToken', result.refreshToken);
+      localStorage.setItem(STORAGE_KEYS.customer.refreshToken, result.refreshToken);
     }
 
     localStorage.setItem(
-      'user',
+      STORAGE_KEYS.customer.user,
       JSON.stringify(result.profile),
     );
 

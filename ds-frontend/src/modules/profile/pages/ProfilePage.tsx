@@ -26,6 +26,8 @@ import {
 import axios from 'axios';
 
 import { profileApi } from '../api/profileApi';
+import { PrimaryButton, LogoutButton } from '../../../shared/components/Button';
+import { useCustomerAuth } from '../../../shared/hooks/useAuth';
 
 import type {
   ChangePasswordRequest,
@@ -38,6 +40,7 @@ const { Title, Text } = Typography;
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { logout } = useCustomerAuth();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,13 +90,7 @@ const ProfilePage = () => {
 
       if (status === 401 || status === 403) {
         message.error('Phiên đăng nhập đã hết hạn');
-
-        localStorage.clear();
-
-        navigate('/login', {
-          replace: true,
-        });
-
+        logout();
         return;
       }
 
@@ -202,17 +199,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <Button
-            danger
-            onClick={() => {
-              localStorage.clear();
-              navigate('/login', {
-                replace: true,
-              });
-            }}
-          >
-            Đăng xuất
-          </Button>
+          <LogoutButton theme="onLight" onClick={logout} />
         </div>
       </header>
 
@@ -349,14 +336,13 @@ const ProfilePage = () => {
 
                     </Row>
 
-                    <Button
-                      type="primary"
+                    <PrimaryButton
+                      fullWidth={false}
                       htmlType="submit"
                       icon={<SaveOutlined />}
-                      size="large"
                     >
                       Lưu thay đổi
-                    </Button>
+                    </PrimaryButton>
                   </Form>
                 ),
               },
@@ -451,14 +437,13 @@ const ProfilePage = () => {
 
                     </Row>
 
-                    <Button
-                      type="primary"
+                    <PrimaryButton
+                      fullWidth={false}
                       htmlType="submit"
                       icon={<SaveOutlined />}
-                      size="large"
                     >
                       Lưu hồ sơ sức khỏe
-                    </Button>
+                    </PrimaryButton>
                   </Form>
                 ),
               },
@@ -562,14 +547,13 @@ const ProfilePage = () => {
                       />
                     </Form.Item>
 
-                    <Button
-                      type="primary"
+                    <PrimaryButton
+                      fullWidth={false}
                       htmlType="submit"
                       icon={<LockOutlined />}
-                      size="large"
                     >
                       Đổi mật khẩu
-                    </Button>
+                    </PrimaryButton>
                   </Form>
                 ),
               },

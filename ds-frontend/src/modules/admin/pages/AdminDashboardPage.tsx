@@ -1,21 +1,14 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { LogoutButton } from '../../../shared/components/Button';
+import { useAdminAuth } from '../../../shared/hooks/useAuth';
 
 const AdminDashboardPage: React.FC = () => {
-  const token = localStorage.getItem('adminAccessToken');
-  const adminStr = localStorage.getItem('adminInfo');
-  const admin = adminStr ? JSON.parse(adminStr) : null;
+  const { isAuthenticated, admin, logout } = useAdminAuth();
 
-  if (!token) {
+  if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
-
-  const handleLogout = () => {
-    localStorage.removeItem('adminAccessToken');
-    localStorage.removeItem('adminRefreshToken');
-    localStorage.removeItem('adminInfo');
-    window.location.href = '/admin/login';
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -32,12 +25,7 @@ const AdminDashboardPage: React.FC = () => {
             <span className="text-indigo-300 text-xs font-medium uppercase tracking-wider">{admin?.role || 'Quản trị viên'}</span>
           </div>
           <div className="h-8 w-px bg-slate-700"></div>
-          <button 
-            onClick={handleLogout}
-            className="text-red-400 hover:text-red-300 font-medium cursor-pointer transition-colors"
-          >
-            Đăng xuất
-          </button>
+          <LogoutButton onClick={logout} />
         </div>
       </header>
       <main className="p-8">

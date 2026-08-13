@@ -12,6 +12,9 @@ import java.util.UUID;
 public interface OtpLogRepository extends JpaRepository<OtpLog, UUID> {
     Optional<OtpLog> findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
             String phoneNumber, String otpCode, LocalDateTime now);
-    
+
+    Optional<OtpLog> findFirstByPhoneNumberAndOtpCodeAndIsUsedFalseOrderByCreatedAtDesc(
+            String phoneNumber, String otpCode);
+
     long countByPhoneNumberAndCreatedAtAfter(String phoneNumber, LocalDateTime time);
 }

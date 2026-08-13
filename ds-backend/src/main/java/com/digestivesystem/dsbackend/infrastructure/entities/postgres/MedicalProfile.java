@@ -14,10 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "medical_profiles")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class MedicalProfile {
 
     @Id
@@ -25,11 +22,7 @@ public class MedicalProfile {
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "customer_id",
-            nullable = false,
-            unique = true
-    )
+    @JoinColumn(name = "customer_id", nullable = false, unique = true)
     private Customer customer;
 
     @Column(name = "height_cm", precision = 5, scale = 2)

@@ -1,17 +1,19 @@
 package com.digestivesystem.dsbackend.application.services;
 
+import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.request.ChangePasswordRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.UpdateMedicalProfileRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.UpdateProfileRequest;
 import com.digestivesystem.dsbackend.application.dtos.response.MedicalProfileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileUpdateResponse;
+import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
 import com.digestivesystem.dsbackend.infrastructure.entities.postgres.Customer;
 import com.digestivesystem.dsbackend.infrastructure.entities.postgres.MedicalProfile;
 import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.CustomerRepository;
 import com.digestivesystem.dsbackend.infrastructure.repositories.postgres.MedicalProfileRepository;
 import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,21 +25,14 @@ import java.util.Optional;
 @Service
 public class ProfileService {
 
-    private static final String CUSTOMER_PREFIX = "CUSTOMER:";
-
     private final CustomerRepository customerRepository;
     private final MedicalProfileRepository medicalProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
 
-    public ProfileService(
-            CustomerRepository customerRepository,
-            MedicalProfileRepository medicalProfileRepository,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService,
-            UserDetailsServiceImpl userDetailsService
-    ) {
+    public ProfileService(CustomerRepository customerRepository, MedicalProfileRepository medicalProfileRepository,
+                          PasswordEncoder passwordEncoder, JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
         this.customerRepository = customerRepository;
         this.medicalProfileRepository = medicalProfileRepository;
         this.passwordEncoder = passwordEncoder;
@@ -45,329 +40,117 @@ public class ProfileService {
         this.userDetailsService = userDetailsService;
     }
 
-    // ==========================================
-    // 1. LẤY CUSTOMER ĐANG ĐĂNG NHẬP TỪ JWT
-    // ==========================================
     private Customer getCurrentCustomer(Authentication authentication) {
-
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-            throw new RuntimeException("UNAUTHORIZED");
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
         }
 
         String username = authentication.getName();
-
-        if (username == null
-                || !username.startsWith(CUSTOMER_PREFIX)) {
-            throw new RuntimeException("UNAUTHORIZED");
+        if (username == null || !username.startsWith(SecurityConstants.CUSTOMER_PREFIX)) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
         }
 
-        // CUSTOMER:0987654321
-        // ->
-        // 0987654321
-        String phoneNumber =
-                username.substring(CUSTOMER_PREFIX.length());
-
-        Customer customer = customerRepository
-                .findByPhoneNumber(phoneNumber)
-                .orElseThrow(
-                        () -> new RuntimeException("USER_NOT_FOUND")
-                );
+        Customer customer = customerRepository.findByPhoneNumber(username.substring(SecurityConstants.CUSTOMER_PREFIX.length()))
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản"));
 
         if (!Boolean.TRUE.equals(customer.getIsActive())) {
-            throw new RuntimeException("USER_BANNED");
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa");
         }
 
         return customer;
     }
 
-    // ==========================================
-    // 2. XEM HỒ SƠ
-    // ==========================================
-    @Transactional(
-            transactionManager = "postgresTransactionManager",
-            readOnly = true
-    )
-    public ProfileResponse getProfile(
-            Authentication authentication
-    ) {
-
-        Customer customer =
-                getCurrentCustomer(authentication);
-
-        return buildProfileResponse(customer);
+    @Transactional(transactionManager = "postgresTransactionManager", readOnly = true)
+    public ProfileResponse getProfile(Authentication authentication) {
+        return buildProfileResponse(getCurrentCustomer(authentication));
     }
 
-    // ==========================================
-    // 3. CẬP NHẬT HỒ SƠ
-    // ==========================================
-    @Transactional(
-            transactionManager = "postgresTransactionManager"
-    )
-    public ProfileUpdateResponse updateProfile(
-            UpdateProfileRequest request,
-            Authentication authentication
-    ) {
+    @Transactional(transactionManager = "postgresTransactionManager")
+    public ProfileUpdateResponse updateProfile(UpdateProfileRequest request, Authentication authentication) {
+        Customer customer = getCurrentCustomer(authentication);
 
-        Customer customer =
-                getCurrentCustomer(authentication);
+        String newPhoneNumber = request.getPhoneNumber().trim();
+        String newEmail = normalizeEmail(request.getEmail());
 
-        String newFullName =
-                request.getFullName().trim();
-
-        String newPhoneNumber =
-                request.getPhoneNumber().trim();
-
-        String newEmail =
-                normalizeEmail(request.getEmail());
-
-        // -------------------------------
-        // Kiểm tra SĐT trùng
-        // -------------------------------
-        Optional<Customer> customerWithPhone =
-                customerRepository.findByPhoneNumber(
-                        newPhoneNumber
-                );
-
-        if (customerWithPhone.isPresent()
-                && !customerWithPhone
-                .get()
-                .getId()
-                .equals(customer.getId())) {
-
-            throw new RuntimeException("PHONE_EXISTS");
+        Optional<Customer> customerWithPhone = customerRepository.findByPhoneNumber(newPhoneNumber);
+        if (customerWithPhone.isPresent() && !customerWithPhone.get().getId().equals(customer.getId())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "Số điện thoại đã được sử dụng");
         }
 
-        // -------------------------------
-        // Kiểm tra email trùng
-        // -------------------------------
         if (newEmail != null) {
-
-            Optional<Customer> customerWithEmail =
-                    customerRepository
-                            .findByEmailIgnoreCase(newEmail);
-
-            if (customerWithEmail.isPresent()
-                    && !customerWithEmail
-                    .get()
-                    .getId()
-                    .equals(customer.getId())) {
-
-                throw new RuntimeException("EMAIL_EXISTS");
+            Optional<Customer> customerWithEmail = customerRepository.findByEmailIgnoreCase(newEmail);
+            if (customerWithEmail.isPresent() && !customerWithEmail.get().getId().equals(customer.getId())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Email đã được sử dụng");
             }
         }
 
-        // -------------------------------
-        // Update Customer
-        // -------------------------------
-        customer.setFullName(newFullName);
+        customer.setFullName(request.getFullName().trim());
         customer.setPhoneNumber(newPhoneNumber);
         customer.setEmail(newEmail);
+        customer = customerRepository.save(customer);
 
-        customer =
-                customerRepository.save(customer);
+        // Token cũ mang theo SĐT cũ (CUSTOMER:<phone>) nên phải cấp lại token mới sau khi đổi SĐT
+        UserDetails userDetails = userDetailsService.loadUserByUsername(SecurityConstants.CUSTOMER_PREFIX + customer.getPhoneNumber());
+        String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
 
-        // -------------------------------
-        // Tạo token mới
-        //
-        // Vì JWT hiện dùng:
-        // CUSTOMER:<phoneNumber>
-        //
-        // Nếu user đổi SĐT thì token cũ
-        // không còn đúng nữa.
-        // -------------------------------
-        UserDetails userDetails =
-                userDetailsService.loadUserByUsername(
-                        CUSTOMER_PREFIX
-                                + customer.getPhoneNumber()
-                );
-
-        String accessToken =
-                jwtService.generateToken(userDetails);
-
-        String refreshToken =
-                jwtService.generateRefreshToken(userDetails);
-
-        return new ProfileUpdateResponse(
-                buildProfileResponse(customer),
-                accessToken,
-                refreshToken
-        );
+        return new ProfileUpdateResponse(buildProfileResponse(customer), accessToken, refreshToken);
     }
 
-    // ==========================================
-    // 4. ĐỔI MẬT KHẨU
-    // ==========================================
-    @Transactional(
-            transactionManager = "postgresTransactionManager"
-    )
-    public void changePassword(
-            ChangePasswordRequest request,
-            Authentication authentication
-    ) {
+    @Transactional(transactionManager = "postgresTransactionManager")
+    public void changePassword(ChangePasswordRequest request, Authentication authentication) {
+        Customer customer = getCurrentCustomer(authentication);
 
-        Customer customer =
-                getCurrentCustomer(authentication);
-
-        // Kiểm tra mật khẩu cũ
-        if (!passwordEncoder.matches(
-                request.getOldPassword(),
-                customer.getPasswordHash()
-        )) {
-
-            throw new RuntimeException(
-                    "OLD_PASSWORD_INVALID"
-            );
+        if (!passwordEncoder.matches(request.getOldPassword(), customer.getPasswordHash())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác");
+        }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Xác nhận mật khẩu mới không khớp");
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), customer.getPasswordHash())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Mật khẩu mới không được giống mật khẩu cũ");
         }
 
-        // New password và Confirm phải giống nhau
-        if (!request.getNewPassword()
-                .equals(request.getConfirmPassword())) {
-
-            throw new RuntimeException(
-                    "PASSWORD_CONFIRM_NOT_MATCH"
-            );
-        }
-
-        // Không cho mật khẩu mới giống mật khẩu cũ
-        if (passwordEncoder.matches(
-                request.getNewPassword(),
-                customer.getPasswordHash()
-        )) {
-
-            throw new RuntimeException(
-                    "NEW_PASSWORD_SAME_AS_OLD"
-            );
-        }
-
-        // Hash mật khẩu mới
-        customer.setPasswordHash(
-                passwordEncoder.encode(
-                        request.getNewPassword()
-                )
-        );
-
+        customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         customerRepository.save(customer);
     }
 
-    // ==========================================
-    // 5. CẬP NHẬT HỒ SƠ BỆNH LÝ
-    // ==========================================
-    @Transactional(
-            transactionManager = "postgresTransactionManager"
-    )
-    public MedicalProfileResponse updateMedicalProfile(
-            UpdateMedicalProfileRequest request,
-            Authentication authentication
-    ) {
+    @Transactional(transactionManager = "postgresTransactionManager")
+    public MedicalProfileResponse updateMedicalProfile(UpdateMedicalProfileRequest request, Authentication authentication) {
+        Customer customer = getCurrentCustomer(authentication);
 
-        Customer customer =
-                getCurrentCustomer(authentication);
+        MedicalProfile medicalProfile = medicalProfileRepository.findByCustomer(customer)
+                .orElseGet(() -> {
+                    MedicalProfile newProfile = new MedicalProfile();
+                    newProfile.setCustomer(customer);
+                    return newProfile;
+                });
 
-        // Nếu đã có MedicalProfile -> lấy ra update
-        // Nếu chưa có -> tạo mới
-        MedicalProfile medicalProfile =
-                medicalProfileRepository
-                        .findByCustomer(customer)
-                        .orElseGet(() -> {
+        medicalProfile.setHeightCm(request.getHeightCm());
+        medicalProfile.setWeightKg(request.getWeightKg());
+        medicalProfile.setMedicalHistory(normalizeText(request.getMedicalHistory()));
 
-                            MedicalProfile newProfile =
-                                    new MedicalProfile();
-
-                            newProfile.setCustomer(customer);
-
-                            return newProfile;
-                        });
-
-        medicalProfile.setHeightCm(
-                request.getHeightCm()
-        );
-
-        medicalProfile.setWeightKg(
-                request.getWeightKg()
-        );
-
-        medicalProfile.setMedicalHistory(
-                normalizeText(
-                        request.getMedicalHistory()
-                )
-        );
-
-        MedicalProfile saved =
-                medicalProfileRepository.save(
-                        medicalProfile
-                );
-
-        return buildMedicalResponse(saved);
+        return buildMedicalResponse(medicalProfileRepository.save(medicalProfile));
     }
 
-    // ==========================================
-    // CHUYỂN CUSTOMER -> PROFILE RESPONSE
-    // ==========================================
-    private ProfileResponse buildProfileResponse(
-            Customer customer
-    ) {
+    private ProfileResponse buildProfileResponse(Customer customer) {
+        MedicalProfileResponse medicalResponse = medicalProfileRepository.findByCustomer(customer)
+                .map(this::buildMedicalResponse)
+                .orElse(new MedicalProfileResponse(null, null, null));
 
-        MedicalProfileResponse medicalResponse =
-                medicalProfileRepository
-                        .findByCustomer(customer)
-                        .map(this::buildMedicalResponse)
-                        .orElse(
-                                new MedicalProfileResponse(
-                                        null,
-                                        null,
-                                        null
-                                )
-                        );
-
-        return new ProfileResponse(
-                customer.getId(),
-                customer.getFullName(),
-                customer.getPhoneNumber(),
-                customer.getEmail(),
-                medicalResponse
-        );
+        return new ProfileResponse(customer.getId(), customer.getFullName(), customer.getPhoneNumber(),
+                customer.getEmail(), medicalResponse);
     }
 
-    // ==========================================
-    // CHUYỂN MEDICAL PROFILE -> RESPONSE
-    // ==========================================
-    private MedicalProfileResponse buildMedicalResponse(
-            MedicalProfile medicalProfile
-    ) {
-
-        return new MedicalProfileResponse(
-                medicalProfile.getHeightCm(),
-                medicalProfile.getWeightKg(),
-                medicalProfile.getMedicalHistory()
-        );
+    private MedicalProfileResponse buildMedicalResponse(MedicalProfile medicalProfile) {
+        return new MedicalProfileResponse(medicalProfile.getHeightCm(), medicalProfile.getWeightKg(), medicalProfile.getMedicalHistory());
     }
 
-    // ==========================================
-    // CHUẨN HÓA EMAIL
-    // ==========================================
     private String normalizeEmail(String email) {
-
-        if (email == null
-                || email.trim().isEmpty()) {
-            return null;
-        }
-
-        return email
-                .trim()
-                .toLowerCase();
+        return (email == null || email.trim().isEmpty()) ? null : email.trim().toLowerCase();
     }
 
-    // ==========================================
-    // CHUẨN HÓA TEXT
-    // ==========================================
     private String normalizeText(String value) {
-
-        if (value == null
-                || value.trim().isEmpty()) {
-            return null;
-        }
-
-        return value.trim();
+        return (value == null || value.trim().isEmpty()) ? null : value.trim();
     }
 }

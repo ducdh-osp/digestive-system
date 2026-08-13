@@ -9,8 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MedicalProfileRepository
-        extends JpaRepository<MedicalProfile, UUID> {
-
+public interface MedicalProfileRepository extends JpaRepository<MedicalProfile, UUID> {
     Optional<MedicalProfile> findByCustomer(Customer customer);
 }
