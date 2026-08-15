@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Link, Navigate } from 'react-router-dom';
 import ProfilePage from '../../modules/profile/pages/ProfilePage';
 import AuthLayout from '../../shared/layouts/AuthLayout';
 import { LogoutButton } from '../../shared/components/Button';
@@ -29,6 +29,13 @@ const ProtectedRoute = () => {
         </div>
         <div className="flex items-center gap-4">
           <span className="text-white font-medium">Xin chào, {user?.fullName || 'Khách'}!</span>
+          <div className="h-8 w-px bg-white/30"></div>
+          <Link
+            to="/profile"
+            className="cursor-pointer rounded-md px-3 py-2 font-medium text-white transition-colors hover:bg-white/20"
+          >
+            Xem hồ sơ
+          </Link>
           <div className="h-8 w-px bg-white/30"></div>
           <LogoutButton onClick={logout} />
         </div>
