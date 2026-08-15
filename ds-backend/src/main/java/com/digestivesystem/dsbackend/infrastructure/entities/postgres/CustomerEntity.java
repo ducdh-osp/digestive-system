@@ -35,6 +35,9 @@ public class CustomerEntity {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

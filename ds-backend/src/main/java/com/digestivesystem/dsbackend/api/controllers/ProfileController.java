@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -45,5 +46,11 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<MedicalProfileResponse>> updateMedicalProfile(
             @Valid @RequestBody UpdateMedicalProfileRequest request, Authentication authentication) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật hồ sơ bệnh lý thành công", profileService.updateMedicalProfile(request, authentication)));
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<ApiResponse<ProfileResponse>> updateAvatar(
+            @RequestParam("file") MultipartFile file, Authentication authentication) {
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật ảnh đại diện thành công", profileService.updateAvatar(file, authentication)));
     }
 }

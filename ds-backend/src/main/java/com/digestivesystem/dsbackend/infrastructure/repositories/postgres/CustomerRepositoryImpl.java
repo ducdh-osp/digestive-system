@@ -44,6 +44,7 @@ public class CustomerRepositoryImpl implements com.digestivesystem.dsbackend.dom
         entity.setEmail(customer.getEmail());
         entity.setPasswordHash(customer.getPasswordHash());
         entity.setIsActive(customer.getIsActive());
+        entity.setAvatarUrl(customer.getAvatarUrl());
 
         return toDomain(jpaRepository.save(entity));
     }
@@ -56,6 +57,7 @@ public class CustomerRepositoryImpl implements com.digestivesystem.dsbackend.dom
                 entity.getEmail(),
                 entity.getPasswordHash(),
                 entity.getIsActive(),
+                entity.getAvatarUrl(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

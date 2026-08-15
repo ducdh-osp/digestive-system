@@ -9,6 +9,7 @@ export interface Profile {
   fullName: string;
   phoneNumber: string;
   email: string | null;
+  avatarUrl: string | null;
   medicalProfile: MedicalProfile | null;
 }
 
