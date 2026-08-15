@@ -23,6 +23,7 @@ public class Customer {
     private String email;
     private String passwordHash;
     private Boolean isActive;
+    private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

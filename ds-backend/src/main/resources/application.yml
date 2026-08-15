@@ -1,4 +1,10 @@
 spring:
+  # Giới hạn kích thước file upload (mặc định Spring Boot chỉ 1MB, avatar cho phép tối đa 2MB)
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
   # Disable Hibernate auto DDL
   jpa:
     hibernate:

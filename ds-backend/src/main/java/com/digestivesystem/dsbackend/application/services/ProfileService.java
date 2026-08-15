@@ -12,6 +12,7 @@ import com.digestivesystem.dsbackend.domain.entities.Customer;
 import com.digestivesystem.dsbackend.domain.entities.MedicalProfile;
 import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
 import com.digestivesystem.dsbackend.domain.repositories.MedicalProfileRepository;
+import com.digestivesystem.dsbackend.infrastructure.file.LocalFileStorageService;
 import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -30,14 +32,17 @@ public class ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final LocalFileStorageService fileStorageService;
 
     public ProfileService(CustomerRepository customerRepository, MedicalProfileRepository medicalProfileRepository,
-                          PasswordEncoder passwordEncoder, JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
+                          PasswordEncoder passwordEncoder, JwtService jwtService, UserDetailsServiceImpl userDetailsService,
+                          LocalFileStorageService fileStorageService) {
         this.customerRepository = customerRepository;
         this.medicalProfileRepository = medicalProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.fileStorageService = fileStorageService;
     }
 
     private Customer getCurrentCustomer(Authentication authentication) {
@@ -133,13 +138,29 @@ public class ProfileService {
         return buildMedicalResponse(medicalProfileRepository.save(medicalProfile));
     }
 
+    @Transactional(transactionManager = "postgresTransactionManager")
+    public ProfileResponse updateAvatar(MultipartFile file, Authentication authentication) {
+        Customer customer = getCurrentCustomer(authentication);
+
+        String oldAvatarUrl = customer.getAvatarUrl();
+        String newAvatarUrl = fileStorageService.storeAvatar(file);
+
+        customer.setAvatarUrl(newAvatarUrl);
+        customer = customerRepository.save(customer);
+
+        // Dọn file cũ SAU khi đã lưu DB thành công, tránh mất avatar nếu save() lỗi giữa chừng.
+        fileStorageService.deleteAvatar(oldAvatarUrl);
+
+        return buildProfileResponse(customer);
+    }
+
     private ProfileResponse buildProfileResponse(Customer customer) {
         MedicalProfileResponse medicalResponse = medicalProfileRepository.findByCustomerId(customer.getId())
                 .map(this::buildMedicalResponse)
                 .orElse(new MedicalProfileResponse(null, null, null));
 
         return new ProfileResponse(customer.getId(), customer.getFullName(), customer.getPhoneNumber(),
-                customer.getEmail(), medicalResponse);
+                customer.getEmail(), customer.getAvatarUrl(), medicalResponse);
     }
 
     private MedicalProfileResponse buildMedicalResponse(MedicalProfile medicalProfile) {

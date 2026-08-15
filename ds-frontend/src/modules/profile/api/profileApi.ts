@@ -1,5 +1,4 @@
-import axios from 'axios';
-
+import axiosClient, { API_ORIGIN } from '../../../core/api/axiosClient';
 import { STORAGE_KEYS } from '../../../core/constants/storageKeys';
 
 import type {
@@ -12,78 +11,41 @@ import type {
   UpdateProfileRequest,
 } from '../types';
 
-const API_URL = 'http://localhost:8080/api/v1/profile';
-
-const getAuthConfig = () => {
-  const token = localStorage.getItem(STORAGE_KEYS.customer.accessToken);
-
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  };
-};
-
 export const profileApi = {
-  getProfile: async (): Promise<Profile> => {
-    const response = await axios.get<ApiResponse<Profile>>(
-      API_URL,
-      getAuthConfig(),
-    );
-
-    return response.data.data;
+  getProfile: (): Promise<ApiResponse<Profile>> => {
+    return axiosClient.get('/profile');
   },
 
-  updateProfile: async (
-    request: UpdateProfileRequest,
-  ): Promise<ProfileUpdateResponse> => {
-    const response = await axios.put<ApiResponse<ProfileUpdateResponse>>(
-      API_URL,
-      request,
-      getAuthConfig(),
-    );
+  updateProfile: (request: UpdateProfileRequest): Promise<ApiResponse<ProfileUpdateResponse>> => {
+    return axiosClient.put('/profile', request);
+  },
 
-    const result = response.data.data;
+  changePassword: (request: ChangePasswordRequest): Promise<ApiResponse<null>> => {
+    return axiosClient.put('/profile/password', request);
+  },
 
-    // Quan trọng:
-    // phone number nằm trong JWT subject.
-    // Nếu đổi phone backend trả token mới.
-    if (result.accessToken) {
-      localStorage.setItem(STORAGE_KEYS.customer.accessToken, result.accessToken);
+  updateMedicalProfile: (request: UpdateMedicalProfileRequest): Promise<ApiResponse<MedicalProfile>> => {
+    return axiosClient.put('/profile/medical', request);
+  },
+
+  // Dùng fetch() thuần thay vì axiosClient: FormData qua fetch luôn được trình duyệt tự
+  // gắn đúng 'Content-Type: multipart/form-data; boundary=...', không phụ thuộc cách
+  // axiosClient merge header mặc định 'application/json' của instance dùng chung.
+  uploadAvatar: async (file: File): Promise<ApiResponse<Profile>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem(STORAGE_KEYS.customer.accessToken);
+    const response = await fetch(`${API_ORIGIN}/api/v1/profile/avatar`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    });
+
+    const result: ApiResponse<Profile> = await response.json();
+    if (!response.ok) {
+      throw { status: response.status, message: result.message };
     }
-
-    if (result.refreshToken) {
-      localStorage.setItem(STORAGE_KEYS.customer.refreshToken, result.refreshToken);
-    }
-
-    localStorage.setItem(
-      STORAGE_KEYS.customer.user,
-      JSON.stringify(result.profile),
-    );
-
     return result;
-  },
-
-  changePassword: async (
-    request: ChangePasswordRequest,
-  ): Promise<void> => {
-    await axios.put(
-      `${API_URL}/password`,
-      request,
-      getAuthConfig(),
-    );
-  },
-
-  updateMedicalProfile: async (
-    request: UpdateMedicalProfileRequest,
-  ): Promise<MedicalProfile> => {
-    const response = await axios.put<ApiResponse<MedicalProfile>>(
-      `${API_URL}/medical`,
-      request,
-      getAuthConfig(),
-    );
-
-    return response.data.data;
   },
 };
