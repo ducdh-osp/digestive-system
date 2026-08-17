@@ -88,7 +88,7 @@ const ResetPasswordPage: React.FC = () => {
           name="newPassword"
           rules={[
             { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-            { min: 6, message: 'Mật khẩu phải từ 6 ký tự trở lên!' }
+            { min: 8, message: 'Mật khẩu phải từ 8 ký tự trở lên!' }
           ]}
         >
           <Input.Password 

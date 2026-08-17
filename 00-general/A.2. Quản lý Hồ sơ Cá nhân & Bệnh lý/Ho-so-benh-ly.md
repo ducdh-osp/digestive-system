@@ -17,17 +17,16 @@ Cho phép khách hàng khai báo và cập nhật các chỉ số thể trạng 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                        │
-│                                          HỒ SƠ BỆNH LÝ                                                 │
+│                                          HỒ SƠ SỨC KHỎE                                                │
 │                                                                                                        │
 │                                          Chiều cao (cm):        Cân nặng (kg):                         │
 │                                          [ 170................] [ 65................]                 │
 │                                                                                                        │
-│                                          Tiền sử bệnh lý (Chọn nhiều):                                 │
-│                                          [x] Viêm dạ dày         [ ] Trào ngược (GERD)                 │
-│                                          [x] Hội chứng ruột kích thích (IBS)                            │
-│                                          [ ] Viêm loét đại tràng  [ ] Khác: [.....................]    │
+│                                          Tiền sử bệnh                                                  │
+│                                          [ Ví dụ: Viêm dạ dày, trào ngược dạ dày...................  ] │
+│                                          [ ............................................ (6 dòng)....  ] │
 │                                                                                                        │
-│                                          [                   LƯU HỒ SƠ BỆNH LÝ       ]                 │
+│                                          [ 💾 LƯU HỒ SƠ SỨC KHỎE ]                                      │
 │                                                                                                        │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -36,13 +35,13 @@ Cho phép khách hàng khai báo và cập nhật các chỉ số thể trạng 
 - **Trường thông tin (Input):**
   - Chiều cao — đơn vị cm (Tùy chọn, kiểu số)
   - Cân nặng — đơn vị kg (Tùy chọn, kiểu số)
-  - Tiền sử bệnh lý — Multi-select (Ví dụ: Dạ dày, IBS, Trào ngược, Viêm loét đại tràng, Khác...)
+  - Tiền sử bệnh — **ô nhập văn bản tự do** (`Input.TextArea`, không phải multi-select checkbox), khách hàng gõ trực tiếp (Ví dụ: "Viêm dạ dày, trào ngược dạ dày"). Không giới hạn danh mục bệnh cố định.
 - **Quy tắc xác thực (Validation - TS Form):**
-  - Chiều cao/Cân nặng nếu nhập phải là số dương, hợp lý (Ví dụ: Chiều cao trong khoảng 50–250, Cân nặng trong khoảng 10–300).
+  - Chiều cao/Cân nặng nếu nhập phải là số dương, hợp lý (Ví dụ: Chiều cao trong khoảng 1–300, Cân nặng trong khoảng 1–500 — khớp giới hạn `InputNumber` phía Frontend).
   - Nếu màn hình được mở lần đầu (khách hàng chưa từng khai báo), form hiển thị trống; nếu đã khai báo trước đó, form tự động điền (pre-fill) dữ liệu cũ để khách hàng chỉnh sửa.
 
 ## 4. Yêu cầu Backend (BE)
-- **API Endpoint:** `PUT /api/v1/customers/medical-profile`
+- **API Endpoint:** `PUT /api/v1/profile/medical`
 - **Database Migration:**
   - Tạo file `V5__create_medical_profiles.sql` để khởi tạo bảng `medical_profiles` lưu trữ thông tin y tế của khách hàng.
 - **Luồng xử lý Logic:**
@@ -68,11 +67,12 @@ Cho phép khách hàng khai báo và cập nhật các chỉ số thể trạng 
 | Tên cột (Column) | Kiểu dữ liệu | Ràng buộc (Constraints) | Mô tả |
 | :--- | :--- | :--- | :--- |
 | **`id`** | `UUID` | **`PRIMARY KEY`**, `DEFAULT gen_random_uuid()` | Khóa chính, tự sinh bằng hàm UUID của Postgres |
-| **`customer_id`** | `UUID` | `NOT NULL`, **`UNIQUE`**, `FOREIGN KEY -> customers(id)` | Liên kết 1-1 với tài khoản khách hàng |
-| **`height_cm`** | `NUMERIC(5,2)` | Nullable | Chiều cao (đơn vị cm) |
-| **`weight_kg`** | `NUMERIC(5,2)` | Nullable | Cân nặng (đơn vị kg) |
-| **`medical_history`** | `TEXT[]` (hoặc `JSONB`) | Nullable | Danh sách tiền sử bệnh lý (Ví dụ: `["Dạ dày", "IBS"]`) |
-| **`updated_at`** | `TIMESTAMP` | `DEFAULT NOW()` | Thời gian cập nhật gần nhất |
+| **`customer_id`** | `UUID` | `NOT NULL`, **`UNIQUE`**, `FOREIGN KEY -> customers(id) ON DELETE CASCADE` | Liên kết 1-1 với tài khoản khách hàng |
+| **`height_cm`** | `NUMERIC(5,2)` | Nullable, `CHECK > 0` | Chiều cao (đơn vị cm) |
+| **`weight_kg`** | `NUMERIC(5,2)` | Nullable, `CHECK > 0` | Cân nặng (đơn vị kg) |
+| **`medical_history`** | `TEXT` | Nullable | Văn bản tự do mô tả tiền sử bệnh (không phải mảng/JSON có cấu trúc) |
+| **`created_at`** | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Thời điểm tạo hồ sơ (lần đầu khai báo) |
+| **`updated_at`** | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Thời gian cập nhật gần nhất |
 
 > [!NOTE]
 > *Ràng buộc `UNIQUE` trên cột `customer_id` đảm bảo mỗi khách hàng chỉ có duy nhất 01 hồ sơ bệnh lý, phục vụ thao tác Upsert (Insert nếu chưa có, Update nếu đã tồn tại) ở Bước 2 của luồng xử lý Backend.*

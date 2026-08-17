@@ -53,13 +53,14 @@ Cho phép khách hàng mới đăng ký tài khoản vào hệ thống Gastro AI
 ## 4. Yêu cầu Backend (BE)
 - **API Endpoint:** `POST /api/v1/auth/register`
 - **Database Migration:** 
-  - Tạo file `V2__create_customer_table.sql` (cho PostgreSQL) để khởi tạo cấu trúc bảng lưu trữ thông tin Customer (nếu chưa có hoặc cần update trường).
+  - Bảng `customers` được khởi tạo tại `V1__init_postgres_schema.sql` và cập nhật cấu trúc (thêm `created_at`, `updated_at`) tại `V2__update_customers_table.sql` (PostgreSQL). Không cần tạo file migration mới cho UC này.
 - **Luồng xử lý Logic:**
   1. Nhận Payload từ FE gửi lên (Họ tên, SĐT, Mật khẩu).
   2. **Query DB (Postgres):** Truy vấn kiểm tra xem Số điện thoại này đã tồn tại trong bảng `customers` hay chưa (kiểm tra trùng lặp).
   3. **Xử lý kết quả:**
      - Nếu đã tồn tại: BE trả về HTTP Status `409 Conflict` kèm thông báo lỗi `"Số điện thoại đã được đăng ký"`.
-     - Nếu chưa tồn tại: BE tạm thời ghi nhận thông tin, kích hoạt quy trình sinh mã OTP gửi về SĐT của khách hàng, và trả về HTTP Status `200 OK` hoặc `202 Accepted` để FE chuyển sang màn hình Xác thực OTP.
+     - Nếu chưa tồn tại: BE **chỉ sinh mã OTP và lưu vào bảng `otp_logs`** (chưa tạo bản ghi `customers` ở bước này — Họ tên/Mật khẩu chưa được lưu trữ tạm ở đâu cả), gửi mã về SĐT của khách hàng, và trả về HTTP Status `200 OK` để FE chuyển sang màn hình Xác thực OTP.
+- **Lưu ý quan trọng (thiết kế "resend"):** Vì tài khoản `customers` chỉ thực sự được tạo ở bước Xác thực OTP (A.1.2), nút "Gửi lại mã" ở màn OTP gọi lại **chính API `/api/v1/auth/register`** này (không có API resend riêng) — hợp lệ vì SĐT vẫn chưa tồn tại trong `customers` tại thời điểm đó.
 
 ## 5. Ngoại lệ (Exception Handling)
 | Mã lỗi HTTP | Mô tả | Hiển thị trên FE |
@@ -82,6 +83,9 @@ Cho phép khách hàng mới đăng ký tài khoản vào hệ thống Gastro AI
 | **`email`** | `TEXT` | `UNIQUE` | Email (Có thể cập nhật sau) |
 | **`password_hash`**| `TEXT` | `NOT NULL` | Chuỗi mật khẩu đã bị mã hoá Bcrypt |
 | **`is_active`** | `BOOLEAN` | `DEFAULT TRUE` | Trạng thái hoạt động của tài khoản |
+| **`avatar_url`** | `TEXT` | Nullable | Đường dẫn ảnh đại diện — bổ sung tại `V6__add_avatar_to_customers.sql`, chi tiết xem module **A.2.5** |
+| **`created_at`** | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Thời điểm tạo tài khoản — bổ sung tại `V2__update_customers_table.sql` |
+| **`updated_at`** | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Thời điểm cập nhật gần nhất — bổ sung tại `V2__update_customers_table.sql` |
 
 > [!NOTE]
-> *Vì bảng `customers` thực tế đã được tạo trong script `V1__init_postgres_schema.sql`, file migration `V2` sẽ đóng vai trò như một bản cập nhật/chuẩn hoá lại bảng này (ví dụ: bổ sung cột `created_at` nếu cần) tuỳ theo quyết định cuối cùng của đội Dev.*
+> *Đây là cấu trúc đầy đủ, hiện hành của bảng `customers` (tổng hợp qua 3 lần migration: `V1` khởi tạo, `V2` bổ sung `created_at`/`updated_at`, `V6` bổ sung `avatar_url` cho module A.2.5). Cột `email` tồn tại sẵn từ `V1` nhưng không đóng vai trò gì trong luồng A.1 (đăng ký/đăng nhập/quên mật khẩu chỉ dùng SĐT) — dự phòng cho các tính năng hồ sơ ở module A.2.*

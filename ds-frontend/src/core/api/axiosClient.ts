@@ -25,17 +25,35 @@ axiosClient.interceptors.request.use(
   }
 );
 
+/**
+ * Khi request dùng responseType 'blob' (vd tải file Export ở D.4.2) mà Backend trả lỗi,
+ * response.data vẫn là 1 Blob (không phải JSON) — phải đọc lại nội dung Blob mới lấy được
+ * đúng message lỗi (ApiResponse.error) thay vì rơi vào message mặc định chung chung.
+ */
+async function extractErrorData(error: any): Promise<any> {
+  const data = error.response?.data;
+  if (data instanceof Blob && data.type.includes('json')) {
+    try {
+      return JSON.parse(await data.text());
+    } catch {
+      return {};
+    }
+  }
+  return data || {};
+}
+
 axiosClient.interceptors.response.use(
   (response) => {
     return response.data;
   },
-  (error) => {
-    const errorMessage = error.response?.data?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+  async (error) => {
+    const errorData = await extractErrorData(error);
+    const errorMessage = errorData?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
     if (error.response?.status >= 500) {
        message.error(errorMessage);
     }
     return Promise.reject({
-      ...(error.response?.data || {}),
+      ...errorData,
       status: error.response?.status,
       message: errorMessage,
     });

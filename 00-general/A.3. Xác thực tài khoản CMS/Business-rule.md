@@ -18,8 +18,9 @@ Dưới đây là danh sách các quy tắc nghiệp vụ (BR) bắt buộc ph�
 - Quy tắc này là quy tắc dùng chung với module A.1 — xem BR-08 tại `Business-rule.md` của A.1.
 
 ## BR-05: Phân quyền theo Role (Role-based Access Control)
-- Mỗi Admin có đúng 1 Role (`SUPER_ADMIN`, `DOCTOR`, ...). Role quyết định phạm vi dữ liệu được truy cập và khu vực giao diện CMS được định tuyến tới sau khi đăng nhập thành công.
+- Mỗi Admin có đúng 1 Role (`SUPER_ADMIN`, `DOCTOR`, ...), lưu qua khoá ngoại `role_id` tới bảng `roles`. Role quyết định phạm vi dữ liệu được truy cập và khu vực giao diện CMS được định tuyến tới sau khi đăng nhập thành công.
 - Backend phải kiểm tra Role ở tầng API (Authorization), không chỉ ẩn/hiện ở Frontend.
+- **Trạng thái hiện tại (Gap):** Đây là quy tắc **định hướng thiết kế**, chưa được triển khai trong code ở phiên bản hiện tại — UC A.3.1 (Đăng nhập) mới chỉ xác thực danh tính, chưa có phân vùng route theo Role ở Frontend lẫn kiểm tra Authorization theo Role ở Backend (mọi Admin đăng nhập thành công đều vào chung `/admin/dashboard`, chưa có API nào chặn theo `role`). Cần lên kế hoạch triển khai ở các UC quản trị tiếp theo (ngoài phạm vi A.3.1).
 
 ## BR-06: Lưu trữ Token độc lập tại Frontend
 - Token của Admin (`adminAccessToken`) phải được lưu trữ độc lập, tách biệt hoàn toàn với Token của Customer (`accessToken`) tại Frontend, tránh xung đột phiên làm việc khi cùng truy cập trên một trình duyệt.

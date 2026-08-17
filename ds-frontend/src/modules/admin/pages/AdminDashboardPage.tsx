@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { LogoutButton } from '../../../shared/components/Button';
 import { useAdminAuth } from '../../../shared/hooks/useAuth';
 
@@ -11,7 +11,7 @@ const AdminDashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-100 flex flex-col">
       <header className="bg-slate-900 shadow-md p-4 px-8 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
@@ -29,13 +29,31 @@ const AdminDashboardPage: React.FC = () => {
         </div>
       </header>
       <main className="p-8">
-        <div className="bg-white p-10 rounded-2xl shadow-sm border border-slate-200 max-w-4xl mx-auto mt-10 text-center">
+        <div className="bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-4xl mx-auto mt-10 text-center">
            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-50 mb-6">
              <span className="text-4xl">🚀</span>
            </div>
            <h2 className="text-3xl font-bold text-slate-800 mb-4">Chào mừng đến với hệ thống Quản trị!</h2>
            <p className="text-slate-500 text-lg">Các tính năng quản lý khách hàng và phân tích dữ liệu đang được hoàn thiện và sẽ sớm được ra mắt.</p>
         </div>
+
+        {admin?.role === 'SUPER_ADMIN' && (
+          <div className="max-w-4xl mx-auto mt-6">
+            <Link
+              to="/admin/audit-logs"
+              className="flex items-center justify-between bg-white p-6 rounded-2xl shadow-md border border-slate-300 hover:border-indigo-300 hover:shadow-lg transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-2xl">📋</div>
+                <div>
+                  <h3 className="font-bold text-slate-800">Nhật ký hệ thống (Audit Log)</h3>
+                  <p className="text-slate-500 text-sm">Xem, lọc và xuất lịch sử thao tác Create/Update/Delete của Admin</p>
+                </div>
+              </div>
+              <span className="text-indigo-500 text-xl">→</span>
+            </Link>
+          </div>
+        )}
       </main>
     </div>
   );

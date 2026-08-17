@@ -45,9 +45,9 @@ Hoàn tất quá trình đăng ký tài khoản của khách hàng bằng cách 
 ## 4. Yêu cầu Backend (BE)
 - **API Endpoint:** `POST /api/v1/auth/verify-otp`
 - **Database Migration:** 
-  - Tạo file `V3__create_otp_logs.sql` để tạo bảng `otp_logs`. Bảng này lưu trữ SĐT, mã OTP đã sinh, thời gian tạo, thời gian hết hạn (180s), và trạng thái (Đã dùng/Chưa dùng).
+  - Tạo file `V3__create_otp_logs_table.sql` để tạo bảng `otp_logs`. Bảng này lưu trữ SĐT, mã OTP đã sinh, thời gian tạo, thời gian hết hạn (180s), và trạng thái (Đã dùng/Chưa dùng).
 - **Luồng xử lý Logic:**
-  1. Nhận Payload từ FE gửi lên (SĐT, Mã OTP).
+  1. Nhận Payload từ FE gửi lên. **Lưu ý:** vì bước Đăng ký (A.1.1) chưa lưu tạm Họ tên/Mật khẩu ở đâu cả, FE phải **gửi lại toàn bộ** dữ liệu đăng ký (SĐT, Mã OTP, Họ tên, Mật khẩu) ở bước này — không chỉ SĐT + OTP.
   2. **Check OTP:** Query vào bảng `otp_logs` kiểm tra xem mã OTP có đúng với SĐT không và trạng thái thời gian có còn hiệu lực (<= 180s kể từ lúc tạo) hay không.
   3. **Xử lý kết quả kiểm tra:**
      - Nếu OTP sai hoặc hết hạn: Trả về lỗi `400 Bad Request` hoặc `401 Unauthorized` kèm message phù hợp.

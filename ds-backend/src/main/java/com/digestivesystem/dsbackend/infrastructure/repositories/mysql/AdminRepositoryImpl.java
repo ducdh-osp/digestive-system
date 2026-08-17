@@ -6,6 +6,7 @@ import com.digestivesystem.dsbackend.infrastructure.entities.mysql.AdminEntity;
 import com.digestivesystem.dsbackend.infrastructure.entities.mysql.RoleEntity;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /** Adapter tầng Infrastructure — implement domain.repositories.AdminRepository bằng JPA thật. */
@@ -21,6 +22,11 @@ public class AdminRepositoryImpl implements com.digestivesystem.dsbackend.domain
     @Override
     public Optional<Admin> findByUsernameOrEmail(String username, String email) {
         return jpaRepository.findByUsernameOrEmail(username, email).map(this::toDomain);
+    }
+
+    @Override
+    public List<Admin> findAll() {
+        return jpaRepository.findAllByOrderByUsernameAsc().stream().map(this::toDomain).toList();
     }
 
     private Admin toDomain(AdminEntity entity) {

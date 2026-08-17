@@ -48,7 +48,7 @@ Cho phép khách hàng đã có tài khoản (đã hoàn tất đăng ký và x�
 - **Luồng xử lý Logic:**
   1. Nhận Payload từ FE (Số điện thoại, Mật khẩu raw).
   2. **Query User:** Tìm kiếm trong bảng `customers` (Postgres) theo `phone_number`.
-     - Nếu không tìm thấy: Trả về lỗi User không tồn tại (`401 Unauthorized` hoặc `404 Not Found`).
+     - Nếu không tìm thấy: Trả về `401 Unauthorized` với thông báo dùng chung "Tài khoản hoặc mật khẩu không chính xác." (thống nhất một mã lỗi duy nhất cho cả trường hợp sai SĐT lẫn sai mật khẩu, tránh lộ thông tin SĐT nào đã đăng ký hay chưa — không có nhánh `404`).
   3. **Verify Hash Password:** Nếu tìm thấy User, BE sử dụng thư viện BCrypt để thực hiện hàm `verify()` (so sánh chuỗi mật khẩu raw của FE truyền lên với chuỗi Password đã bị mã hóa lưu trong DB).
   4. **Xử lý kết quả kiểm tra:**
      - Nếu Password không khớp: Trả về lỗi `401 Unauthorized`.
