@@ -24,3 +24,15 @@ Dưới đây là danh sách các quy tắc nghiệp vụ (BR) bắt buộc ph�
 
 ## BR-06: Toàn vẹn dữ liệu khi cập nhật thông tin cá nhân
 - Yêu cầu cập nhật (`PUT /profile`) chỉ được thực hiện khi toàn bộ trường bắt buộc (Họ tên, Số điện thoại) hợp lệ; nếu chỉ một phần dữ liệu sai, toàn bộ request bị từ chối (không cập nhật một phần).
+
+## BR-07: Mật khẩu mới không được trùng mật khẩu cũ
+- Khi đổi mật khẩu (A.2.3), nếu Mật khẩu mới trùng với Mật khẩu hiện tại đang dùng, hệ thống từ chối yêu cầu.
+- **Lý do:** Tránh trường hợp khách hàng "đổi mật khẩu" chỉ để đối phó yêu cầu định kỳ nhưng thực chất không đổi gì, làm giảm hiệu quả bảo mật của việc bắt buộc đổi mật khẩu.
+
+## BR-08: Cấp lại Token khi đổi Số điện thoại
+- Vì JWT Token mã hoá Số điện thoại vào `Subject` (`CUSTOMER:<phone>`), khi khách hàng đổi SĐT (A.2.2) thành công, Backend **bắt buộc** phải cấp lại `accessToken`/`refreshToken` mới trong cùng response, Frontend **bắt buộc** phải lưu đè Token mới ngay lập tức.
+- **Lý do:** Token cũ (mã hoá SĐT cũ) không còn khớp với SĐT mới trong DB, các API tiếp theo dùng Token cũ sẽ bị từ chối.
+
+## BR-09: Ràng buộc file khi đổi ảnh đại diện
+- File ảnh đại diện (A.2.5) chỉ chấp nhận định dạng **JPEG, PNG, WEBP**, dung lượng tối đa **2MB**. Validate bắt buộc ở **cả Frontend lẫn Backend** (Frontend không đủ tin cậy vì có thể bị bỏ qua nếu gọi API trực tiếp).
+- Ảnh cũ phải được **xoá khỏi hệ thống lưu trữ** ngay sau khi ảnh mới được lưu thành công vào DB — tránh rác tích tụ chiếm dung lượng đĩa vô thời hạn.

@@ -11,7 +11,7 @@ Tài liệu này tổng hợp luồng đi (Flow) của hệ thống khi người
    - Nếu đã tồn tại: Báo lỗi 409.
    - Nếu chưa tồn tại: BE sinh ngẫu nhiên mã OTP 6 số, gọi dịch vụ SMS (hoặc giả lập) để gửi mã tới SĐT.
 4. **Bước 4 (FE):** Nhận HTTP 200, chuyển khách hàng sang trang Nhập OTP. Kích hoạt đồng hồ 180s.
-5. **Bước 5 (FE -> BE):** Khách hàng nhập OTP. FE gọi API `/api/v1/auth/verify-otp`.
+5. **Bước 5 (FE -> BE):** Khách hàng nhập OTP. FE gọi API `/api/v1/auth/verify-otp`, gửi kèm lại toàn bộ Họ tên/Mật khẩu đã nhập ở Bước 1 (Backend không lưu tạm dữ liệu này ở Bước 3).
 6. **Bước 6 (BE):** BE kiểm tra bảng `otp_logs`.
    - Nếu OTP hợp lệ: Mã hoá Mật khẩu (Bcrypt), lưu thông tin tài khoản vào bảng `customers`. Cập nhật trạng thái OTP là đã dùng. Sinh `JWT Token`.
 7. **Bước 7 (FE):** Nhận JWT Token, tự động đăng nhập và chuyển hướng khách hàng vào Trang chủ.

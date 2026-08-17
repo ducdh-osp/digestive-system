@@ -33,13 +33,6 @@ const LoginPage: React.FC = () => {
         ]);
       } else if (error.status === 403) {
          message.error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.');
-      } else if (error.status === 404) {
-         form.setFields([
-          {
-            name: 'phoneNumber',
-            errors: ['Tài khoản không tồn tại.'],
-          },
-        ]);
       }
     } finally {
       setLoading(false);

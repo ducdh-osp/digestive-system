@@ -44,13 +44,14 @@ Cho phép khách hàng chỉnh sửa các thông tin định danh cơ bản (H�
   - Button "Lưu thay đổi" bị disable nếu form chưa thay đổi gì so với dữ liệu gốc, hoặc dữ liệu chưa thỏa điều kiện validate.
 
 ## 4. Yêu cầu Backend (BE)
-- **API Endpoint:** `PUT /api/v1/customers/profile`
+- **API Endpoint:** `PUT /api/v1/profile`
 - **Luồng xử lý Logic:**
   1. Nhận Payload từ FE gửi lên (Họ tên, SĐT, Email) kèm `customerId` trích từ JWT Token.
-  2. **Query DB (Postgres):** Kiểm tra trùng lặp — truy vấn bảng `customers` xem SĐT/Email mới có đang được sử dụng bởi một `id` khác (khác `customerId` hiện tại) hay không.
+  2. **Kiểm tra trùng lặp:** Truy vấn bảng `customers` xem SĐT/Email mới có đang được sử dụng bởi một `id` khác (khác `customerId` hiện tại) hay không.
   3. **Xử lý kết quả:**
      - Nếu trùng: BE trả về HTTP Status `409 Conflict` kèm thông báo lỗi cho trường bị trùng (`"Số điện thoại đã được sử dụng"` hoặc `"Email đã được sử dụng"`).
      - Nếu hợp lệ: Cập nhật (`UPDATE`) bản ghi trong bảng `customers`, trả về HTTP Status `200 OK` kèm dữ liệu mới nhất.
+  4. **Quan trọng:** Vì JWT hiện mã hoá SĐT vào `Subject` (`CUSTOMER:<phone>`), nếu khách hàng đổi SĐT thì Token cũ hết hiệu lực ngay — Backend phải cấp lại `accessToken`/`refreshToken` MỚI trong cùng response, FE bắt buộc phải lưu đè lên Token cũ trong `localStorage` (nếu không request tiếp theo sẽ bị `401`).
 
 ## 5. Ngoại lệ (Exception Handling)
 | Mã lỗi HTTP | Mô tả | Hiển thị trên FE |

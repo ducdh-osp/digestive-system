@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from 'antd';
 import type { ButtonProps } from 'antd';
 
-interface PrimaryButtonProps extends Omit<ButtonProps, 'type' | 'size'> {
+interface PrimaryButtonProps extends Omit<ButtonProps, 'type' | 'size' | 'color' | 'variant'> {
   color?: 'blue' | 'indigo';
   variant?: 'solid' | 'outline';
   fullWidth?: boolean;

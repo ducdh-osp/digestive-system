@@ -5,7 +5,7 @@ Dưới đây là danh sách các quy tắc nghiệp vụ (BR) bắt buộc ph�
 ## BR-01: Định dạng Số điện thoại
 - Số điện thoại hợp lệ phải là số điện thoại Việt Nam.
 - **Quy tắc:** Bắt buộc bắt đầu bằng số `0`, có độ dài đúng `10` chữ số. Chỉ chứa ký tự số (0-9).
-- **Phạm vi áp dụng:** Frontend (lúc gõ Input) và Backend (lúc validate Request).
+- **Phạm vi áp dụng thực tế:** Chỉ được validate đầy đủ (cả FE lẫn BE, `@Pattern(regexp = "^0\\d{9}$")`) ở 2 màn **Đăng ký (A.1.1)** và **Xác thực OTP (A.1.2)**. Ở màn **Đăng nhập (A.1.3)** và **Quên mật khẩu (A.1.4)**, Backend chỉ validate `@NotBlank` (không kiểm tra định dạng), Frontend dùng pattern lỏng hơn `/^[0-9]{10}$/` (10 số, không bắt buộc bắt đầu bằng 0) — đây là khoảng hở cần đội Dev xem xét đồng bộ lại nếu muốn áp dụng BR-01 nhất quán trên toàn module.
 
 ## BR-02: Quy tắc Mật khẩu
 - Mật khẩu phải có độ dài tối thiểu **8 ký tự** (`Pass >= 8`).
@@ -20,6 +20,7 @@ Dưới đây là danh sách các quy tắc nghiệp vụ (BR) bắt buộc ph�
 - Độ dài mã OTP là **6 chữ số** (sinh ngẫu nhiên).
 - **Thời gian hiệu lực (TTL):** Đúng **180 giây (3 phút)** kể từ thời điểm BE sinh ra mã.
 - **Giới hạn spam:** Một số điện thoại chỉ được yêu cầu gửi lại mã OTP tối đa **5 lần / ngày**. Nếu vượt quá, trả lỗi `429 Too Many Requests`.
+- **Lưu ý:** Bảng `otp_logs` không phân biệt "mục đích" tạo OTP (Đăng ký hay Quên mật khẩu) — hạn mức 5 lần/ngày này là **hạn mức dùng chung** giữa 2 luồng A.1.1 và A.1.4 cho cùng một SĐT, không phải 5 lần riêng cho mỗi luồng.
 
 ## BR-05: Thu hồi và trạng thái OTP
 - Mã OTP chỉ được sử dụng thành công **đúng 1 lần**. 

@@ -37,7 +37,7 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <Spin size="large" />
       </div>
     );
@@ -48,7 +48,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <AppHeader />
 
       {/* Quay lại Trang chủ — header giống hệt Trang chủ nên đặt link quay lại riêng ở đây */}
@@ -64,7 +64,7 @@ const ProfilePage = () => {
       {/* CONTENT */}
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* USER SUMMARY */}
-        <Card className="mb-6 shadow-sm">
+        <Card className="mb-6 shadow-md">
           <div className="flex items-center gap-5">
             <AvatarUploader
               avatarUrl={profile.avatarUrl}
@@ -86,7 +86,7 @@ const ProfilePage = () => {
           </div>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className="shadow-md">
           <Tabs
             defaultActiveKey="personal"
             items={[

@@ -44,19 +44,19 @@ Cho phép khách hàng đã đăng nhập tự thay đổi mật khẩu của m�
   - Button "Xác nhận đổi mật khẩu" bị disable nếu các trường chưa thoả điều kiện validate.
 
 ## 4. Yêu cầu Backend (BE)
-- **API Endpoint:** `PUT /api/v1/customers/change-password`
+- **API Endpoint:** `PUT /api/v1/profile/password`
 - **Luồng xử lý Logic:**
-  1. Nhận Payload từ FE (Mật khẩu hiện tại, Mật khẩu mới) kèm `customerId` trích từ JWT Token.
-  2. **Verify Pass cũ:** BE lấy `password_hash` hiện tại của user từ bảng `customers`, dùng Bcrypt thực hiện hàm `verify()` so sánh với Mật khẩu hiện tại do FE gửi lên.
-  3. **Xử lý kết quả kiểm tra:**
-     - Nếu Mật khẩu hiện tại không khớp: Trả về `400 Bad Request` (hoặc `401 Unauthorized`).
-     - Nếu khớp: Mã hoá (Hash) Mật khẩu mới bằng Bcrypt, `UPDATE` cột `password_hash` trong bảng `customers`.
-  4. Trả về HTTP Status `200 OK`. Không cần thu hồi Token hiện tại (khách hàng vẫn giữ phiên đăng nhập).
+  1. Nhận Payload từ FE (Mật khẩu hiện tại, Mật khẩu mới, Xác nhận mật khẩu mới) kèm `customerId` trích từ JWT Token.
+  2. **Verify Pass cũ:** BE lấy `password_hash` hiện tại của user từ bảng `customers`, dùng Bcrypt thực hiện hàm `verify()` so sánh với Mật khẩu hiện tại do FE gửi lên — sai thì trả `400 Bad Request`.
+  3. **So khớp Xác nhận:** Mật khẩu mới phải trùng khớp Xác nhận mật khẩu mới — lệch thì trả `400 Bad Request`.
+  4. **Chặn trùng mật khẩu cũ:** Nếu Mật khẩu mới trùng với Mật khẩu hiện tại (so bằng Bcrypt `verify()`), trả `400 Bad Request` — không cho đổi "mật khẩu mới" giống hệt mật khẩu đang dùng.
+  5. Mã hoá (Hash) Mật khẩu mới bằng Bcrypt, `UPDATE` cột `password_hash` trong bảng `customers`, trả về HTTP Status `200 OK`. Không cần thu hồi Token hiện tại (khách hàng vẫn giữ phiên đăng nhập).
 
 ## 5. Ngoại lệ (Exception Handling)
 | Mã lỗi HTTP | Mô tả | Hiển thị trên FE |
 |---|---|---|
-| `400 Bad Request` | Mật khẩu hiện tại không đúng | Text đỏ dưới ô "Mật khẩu hiện tại": "Mật khẩu hiện tại không chính xác" |
-| `400 Bad Request` | Mật khẩu mới không đạt chuẩn (< 8 ký tự) hoặc Xác nhận không khớp | Text đỏ dưới ô tương ứng |
+| `400 Bad Request` | Mật khẩu hiện tại không đúng | Toast lỗi: "Mật khẩu hiện tại không chính xác" |
+| `400 Bad Request` | Xác nhận mật khẩu mới không khớp | Toast lỗi: "Xác nhận mật khẩu mới không khớp" |
+| `400 Bad Request` | Mật khẩu mới trùng mật khẩu cũ | Toast lỗi: "Mật khẩu mới không được giống mật khẩu cũ" |
 | `401 Unauthorized` | Token không hợp lệ hoặc đã hết hạn | Tự động đăng xuất, chuyển hướng về màn hình Đăng nhập |
 | `500 Internal Error` | Lỗi kết nối DB / Lỗi server chưa xác định | Toast lỗi: "Hệ thống đang bận, vui lòng thử lại sau" |

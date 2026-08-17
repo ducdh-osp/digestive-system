@@ -10,6 +10,7 @@ import ForgotPasswordPage from '../../modules/auth/pages/ForgotPasswordPage';
 import ResetPasswordPage from '../../modules/auth/pages/ResetPasswordPage';
 import AdminLoginPage from '../../modules/admin-auth/pages/AdminLoginPage';
 import AdminDashboardPage from '../../modules/admin/pages/AdminDashboardPage';
+import AuditLogPage from '../../modules/audit-log/pages/AuditLogPage';
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
   {
     path: '/admin/dashboard',
     element: <AdminDashboardPage />,
+  },
+  {
+    path: '/admin/audit-logs',
+    element: <AuditLogPage />,
   },
   {
     path: '/profile',

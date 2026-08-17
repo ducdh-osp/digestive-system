@@ -16,34 +16,29 @@ Cho phép khách hàng đã đăng nhập xem lại toàn bộ thông tin cá nh
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                                        │
-│   [  Ảnh đại diện    ]                  HỒ SƠ CÁ NHÂN                                                  │
-│   [   Gastro AI App  ]                                                                                │
-│   [                  ]                  Họ và tên:      Nguyễn Văn A                                   │
-│                                          Số điện thoại:  0912xxxxxx                                    │
-│                                          Email:          nguyenvana@gmail.com                          │
-│                                                                                                        │
-│                                          Chiều cao / Cân nặng:  170 cm / 65 kg                         │
-│                                          Tiền sử bệnh lý:       Dạ dày, IBS                             │
-│                                                                                                        │
-│                                          [        CHỈNH SỬA THÔNG TIN        ]                         │
-│                                          [        ĐỔI MẬT KHẨU               ]                         │
-│                                          [        CẬP NHẬT HỒ SƠ BỆNH LÝ      ]                        │
-│                                                                                                        │
+│  Gastro AI                                                                    🔔      👤 Nguyễn Văn A   │
+│  ─────────────────────────────────────────────────────────────────────────────────────────────────────  │
+│   ( 📷 )  Nguyễn Văn A                                                                                  │
+│   [Ảnh]   0912xxxxxx                                                                                    │
+│           nguyenvana@gmail.com                                                                          │
+│  ──────────────────────────────────────────────────────────────────────────────────────────────────── │
+│   Thông tin cá nhân │  Hồ sơ sức khỏe  │  Đổi mật khẩu                                                  │
+│  ──────────────────────────────────────────────────────────────────────────────────────────────────── │
+│   (Nội dung tab đang chọn — xem chi tiết ở A.2.2/A.2.3/A.2.4)                                            │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.2. Chức năng (Functional)
 - **Trigger:** FE tự động gọi API lấy dữ liệu ngay khi khách hàng vào màn hình Profile (không cần thao tác thêm).
-- **Hiển thị:** Render thông tin cá nhân (Họ tên, SĐT, Email) và thông tin bệnh lý (nếu đã từng khai báo). Nếu chưa có hồ sơ bệnh lý, hiển thị placeholder "Chưa cập nhật" kèm nút mời khách hàng bổ sung.
-- **Điều hướng:** Từ màn hình này, khách hàng có thể bấm sang các chức năng con: Cập nhật thông tin (A.2.2), Đổi mật khẩu (A.2.3), Cập nhật hồ sơ bệnh lý (A.2.4).
+- **Hiển thị:** Card tóm tắt gồm Ảnh đại diện (bấm vào icon camera để đổi — xem A.2.5), Họ tên, SĐT, Email; bên dưới là 3 tab: "Thông tin cá nhân" (A.2.2), "Hồ sơ sức khỏe" (A.2.4), "Đổi mật khẩu" (A.2.3) — cả 3 tab cùng mount song song (Ant Design `Tabs`), không phải 3 màn hình điều hướng riêng.
+- **Nếu chưa có hồ sơ bệnh lý:** tab "Hồ sơ sức khỏe" hiển thị form trống (không có placeholder mời riêng), khách hàng nhập và lưu như bình thường.
 
 ## 4. Yêu cầu Backend (BE)
-- **API Endpoint:** `GET /api/v1/customers/profile`
+- **API Endpoint:** `GET /api/v1/profile`
 - **Luồng xử lý Logic:**
   1. BE trích xuất thông tin định danh (`customerId`) từ `JWT Token` được đính kèm trong Header `Authorization: Bearer <token>`.
-  2. **Query DB (Postgres):** Truy vấn bảng `customers` theo `id`, kết hợp (LEFT JOIN) với bảng `medical_profiles` theo `customer_id` để lấy đồng thời thông tin bệnh lý (nếu có).
-  3. Trả về HTTP Status `200 OK` kèm dữ liệu tổng hợp của khách hàng.
+  2. Truy vấn bảng `customers` theo `id`, kết hợp với bảng `medical_profiles` theo `customer_id` để lấy đồng thời thông tin bệnh lý (nếu có).
+  3. Trả về HTTP Status `200 OK` kèm dữ liệu tổng hợp: Họ tên, SĐT, Email, `avatarUrl` (đường dẫn ảnh đại diện, `null` nếu chưa từng đổi ảnh — xem A.2.5), và thông tin bệnh lý.
 
 ## 5. Ngoại lệ (Exception Handling)
 | Mã lỗi HTTP | Mô tả | Hiển thị trên FE |
