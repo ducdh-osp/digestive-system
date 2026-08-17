@@ -62,7 +62,7 @@ const AuditLogPage: React.FC = () => {
     }
     auditLogApi.listAdmins()
       .then((res) => setAdmins(res.data))
-      .catch((err) => message.error(err?.message || 'Không tải được danh sách Admin'));
+      .catch(() => setAdmins([]));
   }, [isAuthenticated, admin?.role]);
 
   useEffect(() => {
@@ -82,7 +82,10 @@ const AuditLogPage: React.FC = () => {
         setData(res.data.content);
         setTotal(res.data.totalElements);
       })
-      .catch((err) => message.error(err.message || 'Không tải được lịch sử hoạt động'))
+      .catch(() => {
+        setData([]);
+        setTotal(0);
+      })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, admin?.role, appliedFilter, page, pageSize]);
@@ -120,8 +123,8 @@ const AuditLogPage: React.FC = () => {
       const filename = `audit-log_${appliedFilter.dateRange[0].format(DATE_FORMAT)}_${appliedFilter.dateRange[1].format(DATE_FORMAT)}.${format}`;
       downloadBlob(blob, filename);
       message.success('Xuất file thành công');
-    } catch (err: any) {
-      message.error(err?.message || 'Xuất file thất bại, vui lòng thử lại sau');
+    } catch {
+      // Toast lỗi API đã được axiosClient hiển thị toàn cục.
     } finally {
       setExporting(false);
     }

@@ -41,12 +41,8 @@ const VerifyOtpPage: React.FC = () => {
       await authApi.register(registerData);
       message.success('Đã gửi lại mã OTP');
       setTimeLeft(180); // Reset timer
-    } catch (error: any) {
-      if (error.status === 429) {
-        message.error('Bạn đã vượt quá số lần nhận mã trong ngày.');
-      } else {
-        message.error('Hệ thống đang bận, vui lòng thử lại sau');
-      }
+    } catch {
+      // Toast lỗi API đã được axiosClient hiển thị toàn cục.
     } finally {
       setLoading(false);
     }
@@ -70,12 +66,8 @@ const VerifyOtpPage: React.FC = () => {
         message.success('Xác thực và đăng nhập thành công!');
         navigate('/');
       }
-    } catch (error: any) {
-      if (error.status === 400) {
-        message.error('Mã xác thực không đúng. Vui lòng kiểm tra lại.');
-      } else if (error.status === 410) {
-        message.error('Mã xác thực đã hết hạn. Vui lòng bấm gửi lại.');
-      }
+    } catch {
+      // Toast lỗi API đã được axiosClient hiển thị toàn cục.
     } finally {
       setLoading(false);
     }

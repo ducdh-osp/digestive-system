@@ -34,8 +34,6 @@ const RegisterPage: React.FC = () => {
             errors: ['Số điện thoại đã tồn tại'],
           },
         ]);
-      } else if (error.status === 400) {
-        message.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
       }
     } finally {
       setLoading(false);

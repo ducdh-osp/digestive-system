@@ -1,19 +1,18 @@
-import { message } from 'antd';
+import { useCallback } from 'react';
 import { useCustomerAuth } from './useAuth';
+import type { ApiError } from '../../core/api/axiosClient';
 
 /**
- * Toast lỗi API dùng chung — 401/403 tự logout Customer, còn lại hiện message từ BE.
- * Dựa trên error.status do axiosClient response interceptor gắn sẵn.
+ * Axios interceptor đã hiển thị toast lỗi toàn cục. Hook này chỉ giữ hành vi logout
+ * của khu vực Customer khi phiên đăng nhập không còn hợp lệ, tránh hiện toast hai lần.
  */
 export function useApiErrorHandler() {
   const { logout } = useCustomerAuth();
 
-  return (error: any) => {
-    if (error?.status === 401 || error?.status === 403) {
-      message.error('Phiên đăng nhập đã hết hạn');
+  return useCallback((error: unknown) => {
+    const apiError = error as Partial<ApiError>;
+    if (apiError.status === 401 || apiError.status === 403) {
       logout();
-      return;
     }
-    message.error(error?.message || 'Có lỗi xảy ra');
-  };
+  }, [logout]);
 }

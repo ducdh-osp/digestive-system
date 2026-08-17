@@ -44,8 +44,6 @@ const ResetPasswordPage: React.FC = () => {
             errors: ['Mã xác thực không chính xác hoặc đã hết hạn.'],
           },
         ]);
-      } else {
-        message.error('Có lỗi xảy ra, vui lòng thử lại sau.');
       }
     } finally {
       setLoading(false);

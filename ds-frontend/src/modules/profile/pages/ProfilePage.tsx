@@ -33,7 +33,7 @@ const ProfilePage = () => {
       }
     };
     loadProfile();
-  }, []);
+  }, [handleApiError]);
 
   if (loading) {
     return (

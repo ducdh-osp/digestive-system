@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCustomerAuth } from '../hooks/useAuth';
 import { LogoutButton } from './Button';
+import NotificationBell from '../../modules/notifications/components/NotificationBell';
 
 /**
  * Header dùng chung cho toàn bộ khu vực đã đăng nhập của Customer (Trang chủ + Profile...).
@@ -23,6 +24,7 @@ const AppHeader = () => {
       </button>
 
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <span className="text-white font-medium">Xin chào, {user?.fullName || 'Khách'}!</span>
         <div className="h-8 w-px bg-white/30"></div>
         <Link
