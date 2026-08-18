@@ -1,0 +1,55 @@
+{
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal information and account security",
+    "tabs": {
+      "personal": "Personal Info",
+      "medical": "Health Profile",
+      "password": "Change Password"
+    },
+    "personal": {
+      "fullNameLabel": "Full name",
+      "fullNameRequired": "Please enter your full name",
+      "fullNamePlaceholder": "Enter your full name",
+      "phoneLabel": "Phone number",
+      "phoneRequired": "Please enter your phone number",
+      "phoneInvalid": "Phone number must have 10 digits and start with 0",
+      "emailLabel": "Email",
+      "emailInvalid": "Invalid email",
+      "save": "Save changes",
+      "success": "Personal information updated successfully"
+    },
+    "medical": {
+      "heightLabel": "Height (cm)",
+      "heightInvalid": "Height must be greater than 0",
+      "weightLabel": "Weight (kg)",
+      "weightInvalid": "Weight must be greater than 0",
+      "historyLabel": "Medical history",
+      "historyPlaceholder": "E.g. Gastritis, acid reflux...",
+      "save": "Save health profile",
+      "success": "Health profile updated successfully"
+    },
+    "password": {
+      "oldLabel": "Current password",
+      "oldPlaceholder": "Enter your current password",
+      "oldRequired": "Please enter your current password",
+      "newLabel": "New password",
+      "newPlaceholder": "Enter a new password",
+      "newRequired": "Please enter a new password",
+      "newMin": "Password must be at least 8 characters",
+      "confirmLabel": "Confirm new password",
+      "confirmPlaceholder": "Re-enter the new password",
+      "confirmRequired": "Please confirm your new password",
+      "confirmMismatch": "Passwords do not match",
+      "submit": "Change password",
+      "success": "Password changed successfully"
+    },
+    "avatar": {
+      "invalidType": "Only JPEG, PNG or WEBP images are accepted",
+      "tooLarge": "Maximum image size is 2MB",
+      "success": "Avatar updated successfully",
+      "changeTitle": "Change avatar",
+      "alt": "Avatar"
+    }
+  }
+}

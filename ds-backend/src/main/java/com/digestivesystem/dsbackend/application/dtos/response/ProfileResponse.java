@@ -16,5 +16,6 @@ public class ProfileResponse {
     private String phoneNumber;
     private String email;
     private String avatarUrl;
+    private String theme;
     private MedicalProfileResponse medicalProfile;
 }

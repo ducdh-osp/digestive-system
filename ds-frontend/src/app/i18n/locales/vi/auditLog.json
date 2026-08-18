@@ -1,0 +1,37 @@
+{
+  "auditLog": {
+    "title": "Nhật ký hệ thống",
+    "subtitle": "Lịch sử thao tác Create/Update/Delete của Admin",
+    "accessDenied": {
+      "title": "Không có quyền truy cập",
+      "description": "Chỉ SUPER_ADMIN được xem Nhật ký hệ thống (BR-03).",
+      "backToDashboard": "Quay lại Trang tổng quan"
+    },
+    "filter": {
+      "title": "Bộ lọc",
+      "dateRange": "Khoảng thời gian",
+      "action": "Hành động",
+      "allOption": "Tất cả",
+      "staff": "Nhân viên",
+      "submit": "Lọc",
+      "export": "Xuất file",
+      "exportExcel": "Xuất Excel (.xlsx)",
+      "exportCsv": "Xuất CSV (.csv)",
+      "exportSuccess": "Xuất file thành công"
+    },
+    "list": {
+      "title": "Danh sách",
+      "totalRecords": "Tổng {{count}} bản ghi",
+      "noMatch": "Không có bản ghi nào phù hợp với bộ lọc hiện tại.",
+      "noDescription": "Không có mô tả",
+      "details": "Chi tiết"
+    },
+    "columns": {
+      "time": "Thời gian",
+      "adminExecutor": "Admin thực hiện",
+      "action": "Hành động",
+      "entity": "Đối tượng",
+      "description": "Mô tả"
+    }
+  }
+}

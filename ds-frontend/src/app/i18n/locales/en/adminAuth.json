@@ -1,0 +1,15 @@
+{
+  "adminAuth": {
+    "title": "Gastro AI CMS",
+    "subtitle": "Internal administration system",
+    "usernameLabel": "Username / Email",
+    "usernamePlaceholder": "Enter admin username or email...",
+    "usernameRequired": "Please enter your username!",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password...",
+    "passwordRequired": "Please enter your password!",
+    "submit": "SIGN IN TO CMS",
+    "success": "Signed in to CMS successfully! Welcome {{username}}",
+    "invalidCredentials": "Incorrect username or password."
+  }
+}

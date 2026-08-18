@@ -1,0 +1,18 @@
+{
+  "notifications": {
+    "title": "Thông báo",
+    "unread": "{{count}} thông báo chưa đọc",
+    "empty": "Không có thông báo mới",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "reload": "Tải lại thông báo",
+    "loadError": "Không thể tải danh sách thông báo.",
+    "retry": "Thử lại",
+    "noItems": "Bạn chưa có thông báo nào.",
+    "loadMore": "Xem thêm",
+    "markAllSuccess": "Đã đánh dấu tất cả thông báo là đã đọc",
+    "unreadAriaLabel": "Chưa đọc",
+    "deleteAriaLabel": "Xóa thông báo {{title}}",
+    "bellAriaLabelUnread": "Thông báo, {{count}} chưa đọc",
+    "bellAriaLabel": "Thông báo"
+  }
+}

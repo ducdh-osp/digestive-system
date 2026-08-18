@@ -4,6 +4,8 @@ import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.response.NotificationListResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.NotificationResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.CommonMessageCodes;
+import com.digestivesystem.dsbackend.application.exceptions.codes.NotificationMessageCodes;
 import com.digestivesystem.dsbackend.domain.entities.Customer;
 import com.digestivesystem.dsbackend.domain.entities.Notification;
 import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
@@ -70,25 +72,25 @@ public class NotificationService {
 
     private Notification findOwnedNotification(UUID notificationId, UUID customerId) {
         return notificationRepository.findByIdAndCustomerId(notificationId, customerId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, NotificationMessageCodes.NOT_FOUND));
     }
 
     private Customer getCurrentCustomer(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
 
         String username = authentication.getName();
         if (username == null || !username.startsWith(SecurityConstants.CUSTOMER_PREFIX)) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
 
         Customer customer = customerRepository
                 .findByPhoneNumber(username.substring(SecurityConstants.CUSTOMER_PREFIX.length()))
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, CommonMessageCodes.ACCOUNT_NOT_FOUND));
 
         if (!Boolean.TRUE.equals(customer.getIsActive())) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa");
+            throw new BusinessException(HttpStatus.FORBIDDEN, CommonMessageCodes.ACCOUNT_LOCKED);
         }
         return customer;
     }

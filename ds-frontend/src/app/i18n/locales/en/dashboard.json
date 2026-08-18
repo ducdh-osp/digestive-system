@@ -1,0 +1,21 @@
+{
+  "dashboard": {
+    "title": "Consult with Gastro AI",
+    "subtitle": "Gastroenterology · AI-powered support",
+    "wipTitle": "AI consultation feature is under development",
+    "wipDescription": "Below is a UI preview with sample data. You will soon be able to chat directly with Gastro AI for guidance on digestive issues.",
+    "sampleTimestamp": "Example, 10:24 AM",
+    "sampleQuestion": "I have a stomachache after eating spicy food, what should I do?",
+    "sampleAnswerIntro": "Hi, a stomachache after eating spicy food can be a sign of inflammation or acid reflux. Spicy food contains capsaicin, which can irritate an already sensitive stomach lining.",
+    "sampleAnswerStepsIntro": "You should take the following steps to ease the discomfort:",
+    "sampleStep1": "Drink some cold milk or warm water to soothe your stomach.",
+    "sampleStep2": "Avoid lying down right after eating to prevent acid reflux.",
+    "sampleStep3": "Monitor the pain: if it is severe, accompanied by vomiting, or persists, seek medical care immediately.",
+    "disclaimer": "AI is for reference only and does not replace diagnosis or treatment by a specialist.",
+    "quickReply1": "Stomachache symptoms",
+    "quickReply2": "Diet for people with stomach pain",
+    "quickReply3": "When should I see a doctor?",
+    "inputPlaceholder": "This feature is under development...",
+    "inputFooter": "AI consultation is coming soon."
+  }
+}

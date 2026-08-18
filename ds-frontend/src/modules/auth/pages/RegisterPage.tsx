@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Form, Input, message } from 'antd';
+import { Form, Input } from 'antd';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authApi } from '../api/authApi';
 import type { RegisterRequest } from '../types';
 import { PrimaryButton } from '../../../shared/components/Button';
 
 const RegisterPage: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -19,10 +22,10 @@ const RegisterPage: React.FC = () => {
         phoneNumber: values.phoneNumber,
         password: values.password
       };
-      
+
       const response = await authApi.register(payload);
       if (response.success) {
-        message.success('Đăng ký thành công, vui lòng xác thực OTP');
+        getMessageApi().success(t('auth.register.success'));
         // Navigate to OTP page and pass state for next step
         navigate('/verify-otp', { state: payload });
       }
@@ -31,7 +34,7 @@ const RegisterPage: React.FC = () => {
         form.setFields([
           {
             name: 'phoneNumber',
-            errors: ['Số điện thoại đã tồn tại'],
+            errors: [t('auth.register.phoneExists')],
           },
         ]);
       }
@@ -43,8 +46,8 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="w-full">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Đăng ký tài khoản mới</h2>
-        <p className="text-gray-500">Tạo tài khoản để trải nghiệm Gastro AI</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">{t('auth.register.title')}</h2>
+        <p className="text-gray-500 dark:text-slate-300">{t('auth.register.subtitle')}</p>
       </div>
 
       <Form
@@ -56,80 +59,80 @@ const RegisterPage: React.FC = () => {
         requiredMark={false}
       >
         <Form.Item
-          label={<span className="font-medium text-gray-700">Họ và tên</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.register.fullNameLabel')}</span>}
           name="fullName"
-          rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
+          rules={[{ required: true, message: t('auth.register.fullNameRequired') }]}
         >
-          <Input 
-            prefix={<UserOutlined className="text-gray-400" />} 
-            placeholder="Nhập họ và tên của bạn" 
+          <Input
+            prefix={<UserOutlined className="text-gray-400" />}
+            placeholder={t('auth.register.fullNamePlaceholder')}
             className="rounded-lg"
           />
         </Form.Item>
 
         <Form.Item
-          label={<span className="font-medium text-gray-700">Số điện thoại</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.register.phoneLabel')}</span>}
           name="phoneNumber"
           rules={[
-            { required: true, message: 'Vui lòng nhập số điện thoại!' },
-            { pattern: /^0[0-9]{9}$/, message: 'Số điện thoại bắt đầu bằng 0 và gồm 10 số!' }
+            { required: true, message: t('auth.register.phoneRequired') },
+            { pattern: /^0[0-9]{9}$/, message: t('auth.register.phoneInvalid') }
           ]}
         >
-          <Input 
-            prefix={<PhoneOutlined className="text-gray-400" />} 
-            placeholder="Nhập số điện thoại" 
+          <Input
+            prefix={<PhoneOutlined className="text-gray-400" />}
+            placeholder={t('auth.register.phonePlaceholder')}
             className="rounded-lg"
           />
         </Form.Item>
 
         <Form.Item
-          label={<span className="font-medium text-gray-700">Mật khẩu</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.register.passwordLabel')}</span>}
           name="password"
           rules={[
-            { required: true, message: 'Vui lòng nhập mật khẩu!' },
-            { min: 8, message: 'Mật khẩu phải dài tối thiểu 8 ký tự!' }
+            { required: true, message: t('auth.register.passwordRequired') },
+            { min: 8, message: t('auth.register.passwordMin') }
           ]}
         >
-          <Input.Password 
-            prefix={<LockOutlined className="text-gray-400" />} 
-            placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)" 
+          <Input.Password
+            prefix={<LockOutlined className="text-gray-400" />}
+            placeholder={t('auth.register.passwordPlaceholder')}
             className="rounded-lg"
           />
         </Form.Item>
 
         <Form.Item
-          label={<span className="font-medium text-gray-700">Xác nhận mật khẩu</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.register.confirmPasswordLabel')}</span>}
           name="confirmPassword"
           dependencies={['password']}
           rules={[
-            { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
+            { required: true, message: t('auth.register.confirmPasswordRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('password') === value) {
                   return Promise.resolve();
                 }
-                return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                return Promise.reject(new Error(t('auth.register.confirmPasswordMismatch')));
               },
             }),
           ]}
         >
-          <Input.Password 
-            prefix={<LockOutlined className="text-gray-400" />} 
-            placeholder="Nhập lại mật khẩu" 
+          <Input.Password
+            prefix={<LockOutlined className="text-gray-400" />}
+            placeholder={t('auth.register.confirmPasswordPlaceholder')}
             className="rounded-lg"
           />
         </Form.Item>
 
         <Form.Item className="mt-8">
           <PrimaryButton htmlType="submit" loading={loading}>
-            ĐĂNG KÝ
+            {t('auth.register.submit')}
           </PrimaryButton>
         </Form.Item>
 
-        <div className="text-center text-gray-600">
-          Đã có tài khoản?{' '}
-          <Link to="/login" className="text-blue-600 hover:text-blue-500 font-semibold transition-colors">
-            Đăng nhập ngay
+        <div className="text-center text-gray-600 dark:text-slate-300">
+          {t('auth.register.haveAccount')}{' '}
+          <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors">
+            {t('auth.register.loginNow')}
           </Link>
         </div>
       </Form>

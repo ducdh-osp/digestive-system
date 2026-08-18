@@ -1,0 +1,15 @@
+{
+  "adminAuth": {
+    "title": "Gastro AI CMS",
+    "subtitle": "Hệ thống quản trị nội bộ",
+    "usernameLabel": "Tên đăng nhập / Email",
+    "usernamePlaceholder": "Nhập admin hoặc email...",
+    "usernameRequired": "Vui lòng nhập tài khoản!",
+    "passwordLabel": "Mật khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu...",
+    "passwordRequired": "Vui lòng nhập mật khẩu!",
+    "submit": "ĐĂNG NHẬP HỆ THỐNG",
+    "success": "Đăng nhập CMS thành công! Xin chào {{username}}",
+    "invalidCredentials": "Tài khoản hoặc mật khẩu không chính xác."
+  }
+}

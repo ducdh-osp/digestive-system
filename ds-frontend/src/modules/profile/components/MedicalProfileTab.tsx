@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Form, InputNumber, Input, Row, Col, message } from 'antd';
+import { Form, InputNumber, Input, Row, Col } from 'antd';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import { SaveOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import { profileApi } from '../api/profileApi';
 import { PrimaryButton } from '../../../shared/components/Button';
@@ -13,6 +15,7 @@ interface MedicalProfileTabProps {
 }
 
 const MedicalProfileTab = ({ medicalProfile, onUpdated }: MedicalProfileTabProps) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm<UpdateMedicalProfileRequest>();
   const [submitting, setSubmitting] = useState(false);
   const handleApiError = useApiErrorHandler();
@@ -22,7 +25,7 @@ const MedicalProfileTab = ({ medicalProfile, onUpdated }: MedicalProfileTabProps
       setSubmitting(true);
       const response = await profileApi.updateMedicalProfile(values);
       onUpdated(response.data);
-      message.success('Cập nhật hồ sơ sức khỏe thành công');
+      getMessageApi().success(t('profile.medical.success'));
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -44,9 +47,9 @@ const MedicalProfileTab = ({ medicalProfile, onUpdated }: MedicalProfileTabProps
       <Row gutter={20}>
         <Col xs={24} md={12}>
           <Form.Item
-            label="Chiều cao (cm)"
+            label={t('profile.medical.heightLabel')}
             name="heightCm"
-            rules={[{ type: 'number', min: 1, message: 'Chiều cao phải lớn hơn 0' }]}
+            rules={[{ type: 'number', min: 1, message: t('profile.medical.heightInvalid') }]}
           >
             <InputNumber size="large" min={1} max={300} style={{ width: '100%' }} placeholder="170" />
           </Form.Item>
@@ -54,17 +57,17 @@ const MedicalProfileTab = ({ medicalProfile, onUpdated }: MedicalProfileTabProps
 
         <Col xs={24} md={12}>
           <Form.Item
-            label="Cân nặng (kg)"
+            label={t('profile.medical.weightLabel')}
             name="weightKg"
-            rules={[{ type: 'number', min: 1, message: 'Cân nặng phải lớn hơn 0' }]}
+            rules={[{ type: 'number', min: 1, message: t('profile.medical.weightInvalid') }]}
           >
             <InputNumber size="large" min={1} max={500} style={{ width: '100%' }} placeholder="65" />
           </Form.Item>
         </Col>
 
         <Col xs={24}>
-          <Form.Item label="Tiền sử bệnh" name="medicalHistory">
-            <Input.TextArea rows={6} placeholder="Ví dụ: Viêm dạ dày, trào ngược dạ dày..." />
+          <Form.Item label={t('profile.medical.historyLabel')} name="medicalHistory">
+            <Input.TextArea rows={6} placeholder={t('profile.medical.historyPlaceholder')} />
           </Form.Item>
         </Col>
       </Row>
@@ -74,9 +77,9 @@ const MedicalProfileTab = ({ medicalProfile, onUpdated }: MedicalProfileTabProps
         htmlType="submit"
         icon={<SaveOutlined />}
         loading={submitting}
-        className="!bg-gradient-to-r !from-blue-600 !to-teal-500 !border-0 hover:!shadow-lg hover:!shadow-blue-200 hover:!scale-[1.02] transition-all duration-200"
+        className="!bg-gradient-to-r !from-blue-600 !to-teal-500 !border-0 hover:!shadow-lg hover:!shadow-blue-200 dark:hover:!shadow-blue-950/50 hover:!scale-[1.02] transition-all duration-200"
       >
-        Lưu hồ sơ sức khỏe
+        {t('profile.medical.save')}
       </PrimaryButton>
     </Form>
   );

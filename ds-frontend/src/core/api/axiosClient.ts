@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
-import { message } from 'antd';
 import { STORAGE_KEYS } from '../constants/storageKeys';
+import i18n from '../../app/i18n/i18n';
+import { getMessageApi } from './messageBridge';
 
 export const API_ORIGIN = 'http://localhost:8080';
 
@@ -17,6 +18,10 @@ axiosClient.interceptors.request.use(
     const token = localStorage.getItem(isAdminRequest ? STORAGE_KEYS.admin.accessToken : STORAGE_KEYS.customer.accessToken);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // F.1.2 — BE dịch thông báo lỗi hệ thống theo header này (xem GlobalExceptionHandler, LocaleConfig).
+    if (config.headers) {
+      config.headers['Accept-Language'] = i18n.language || 'vi';
     }
     return config;
   },
@@ -79,7 +84,7 @@ axiosClient.interceptors.response.use(
     const status = error.response?.status;
     const errorMessage = getErrorMessage(status, errorData);
 
-    message.open({
+    getMessageApi().open({
       type: 'error',
       content: errorMessage,
       key: `api-error-${status ?? 'network'}-${errorMessage}`,

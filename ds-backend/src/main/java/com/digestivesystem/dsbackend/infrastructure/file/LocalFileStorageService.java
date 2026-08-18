@@ -1,6 +1,7 @@
 package com.digestivesystem.dsbackend.infrastructure.file;
 
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.FileStorageMessageCodes;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,13 +28,13 @@ public class LocalFileStorageService {
 
     public String storeAvatar(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Vui lòng chọn file ảnh");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, FileStorageMessageCodes.FILE_REQUIRED);
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Kích thước ảnh tối đa 2MB");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, FileStorageMessageCodes.FILE_TOO_LARGE);
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Chỉ chấp nhận ảnh định dạng JPEG, PNG hoặc WEBP");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, FileStorageMessageCodes.INVALID_FILE_TYPE);
         }
 
         try {
@@ -45,7 +46,7 @@ public class LocalFileStorageService {
 
             return "/uploads/avatars/" + filename;
         } catch (IOException e) {
-            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu ảnh, vui lòng thử lại");
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, FileStorageMessageCodes.SAVE_FAILED);
         }
     }
 

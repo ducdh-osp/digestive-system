@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Card, ConfigProvider, Dropdown, Empty, Form, Select, Table, Tag, message } from 'antd';
+import { Card, ConfigProvider, Dropdown, Empty, Form, Select, Table, Tag } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import type { TableProps } from 'antd';
 import { DatePicker } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { DownloadOutlined, DownOutlined, FilterOutlined, LoadingOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import AdminLayout from '../../../shared/layouts/AdminLayout';
+import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useAdminAuth } from '../../../shared/hooks/useAuth';
 import { PrimaryButton } from '../../../shared/components/Button';
 import { auditLogApi } from '../api/auditLogApi';
@@ -23,12 +26,6 @@ const ACTION_COLORS: Record<AuditAction, string> = {
   DELETE: 'red',
 };
 
-const ACTION_OPTIONS = [
-  { value: 'CREATE', label: 'CREATE' },
-  { value: 'UPDATE', label: 'UPDATE' },
-  { value: 'DELETE', label: 'DELETE' },
-];
-
 function downloadBlob(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -41,8 +38,16 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 const AuditLogPage: React.FC = () => {
+  const { t } = useTranslation();
   const { isAuthenticated, admin } = useAdminAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
+
+  const ACTION_OPTIONS = [
+    { value: 'CREATE', label: 'CREATE' },
+    { value: 'UPDATE', label: 'UPDATE' },
+    { value: 'DELETE', label: 'DELETE' },
+  ];
 
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(6, 'day'), dayjs()]);
   const [action, setAction] = useState<AuditAction | undefined>(undefined);
@@ -96,11 +101,11 @@ const AuditLogPage: React.FC = () => {
   }
   if (admin?.role !== 'SUPER_ADMIN') {
     return (
-      <AdminLayout title="Nhật ký hệ thống">
-        <div className="max-w-md mx-auto bg-white p-10 rounded-2xl shadow-md border border-slate-300 text-center">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Không có quyền truy cập</h2>
-          <p className="text-slate-500 mb-6">Chỉ SUPER_ADMIN được xem Nhật ký hệ thống (BR-03).</p>
-          <PrimaryButton onClick={() => navigate('/admin/dashboard')} color="indigo">Quay lại Trang tổng quan</PrimaryButton>
+      <AdminLayout title={t('auditLog.title')}>
+        <div className="max-w-md mx-auto bg-white dark:bg-slate-800 p-10 rounded-2xl shadow-md border border-slate-300 dark:border-slate-700 text-center">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">{t('auditLog.accessDenied.title')}</h2>
+          <p className="text-slate-500 dark:text-slate-300 mb-6">{t('auditLog.accessDenied.description')}</p>
+          <PrimaryButton onClick={() => navigate('/admin/dashboard')} color="indigo">{t('auditLog.accessDenied.backToDashboard')}</PrimaryButton>
         </div>
       </AdminLayout>
     );
@@ -123,7 +128,7 @@ const AuditLogPage: React.FC = () => {
       });
       const filename = `audit-log_${appliedFilter.dateRange[0].format(DATE_FORMAT)}_${appliedFilter.dateRange[1].format(DATE_FORMAT)}.${format}`;
       downloadBlob(blob, filename);
-      message.success('Xuất file thành công');
+      getMessageApi().success(t('auditLog.filter.exportSuccess'));
     } catch {
       // Toast lỗi API đã được axiosClient hiển thị toàn cục.
     } finally {
@@ -133,13 +138,13 @@ const AuditLogPage: React.FC = () => {
 
   const columns: TableProps<AuditLogItem>['columns'] = [
     {
-      title: 'Thời gian',
+      title: t('auditLog.columns.time'),
       dataIndex: 'createdAt',
       width: 170,
       render: (value: string) => dayjs(value).format('DD/MM/YYYY HH:mm:ss'),
     },
     {
-      title: 'Admin thực hiện',
+      title: t('auditLog.columns.adminExecutor'),
       dataIndex: 'adminUsername',
       render: (_: string, record: AuditLogItem) => (
         <span>
@@ -149,20 +154,20 @@ const AuditLogPage: React.FC = () => {
       ),
     },
     {
-      title: 'Hành động',
+      title: t('auditLog.columns.action'),
       dataIndex: 'action',
       width: 110,
       render: (value: AuditAction) => <Tag color={ACTION_COLORS[value]}>{value}</Tag>,
     },
     {
-      title: 'Đối tượng',
+      title: t('auditLog.columns.entity'),
       dataIndex: 'entityName',
       render: (_: string, record: AuditLogItem) => (
         <span className="font-mono text-sm">{record.entityName}{record.entityId ? `#${record.entityId}` : ''}</span>
       ),
     },
     {
-      title: 'Mô tả',
+      title: t('auditLog.columns.description'),
       dataIndex: 'description',
       ellipsis: true,
       render: (value: string | null) => value || '-',
@@ -170,34 +175,36 @@ const AuditLogPage: React.FC = () => {
   ];
 
   const exportItems = [
-    { key: 'xlsx', label: 'Xuất Excel (.xlsx)' },
-    { key: 'csv', label: 'Xuất CSV (.csv)' },
+    { key: 'xlsx', label: t('auditLog.filter.exportExcel') },
+    { key: 'csv', label: t('auditLog.filter.exportCsv') },
   ];
 
   return (
     <ConfigProvider
       theme={{
         token: { colorPrimary: BRAND_COLOR, colorLink: BRAND_COLOR },
-        components: {
-          Table: { headerBg: '#eef2ff', headerColor: BRAND_COLOR, borderColor: '#e0e7ff', rowHoverBg: '#f5f3ff' },
-        },
+        // Màu header/hover bảng chỉ ép cứng ở Light Mode — Dark Mode để trống, dùng luôn màu mặc định
+        // từ `algorithm` của antd (LocaleConfig gốc app), tránh header bảng sáng lạc quẻ trên nền tối.
+        components: theme === 'light'
+          ? { Table: { headerBg: '#eef2ff', headerColor: BRAND_COLOR, borderColor: '#e0e7ff', rowHoverBg: '#f5f3ff' } }
+          : {},
       }}
     >
-      <AdminLayout title="Nhật ký hệ thống" subtitle="Lịch sử thao tác Create/Update/Delete của Admin">
+      <AdminLayout title={t('auditLog.title')} subtitle={t('auditLog.subtitle')}>
         <div className="max-w-6xl mx-auto space-y-6">
           <Card
             title={(
               <span className="flex items-center gap-3 py-1">
-                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm shadow-md shadow-indigo-200 shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm shadow-md shadow-indigo-200 dark:shadow-indigo-950/50 shrink-0">
                   <FilterOutlined />
                 </span>
-                <span className="font-bold text-slate-800">Bộ lọc</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{t('auditLog.filter.title')}</span>
               </span>
             )}
-            className="rounded-2xl border-slate-300 shadow-md transition-shadow duration-300 hover:shadow-lg hover:border-indigo-300"
+            className="rounded-2xl border-slate-300 dark:border-slate-700 dark:bg-slate-800 shadow-md transition-shadow duration-300 hover:shadow-lg hover:border-indigo-300"
           >
             <Form layout="inline" className="[&_.ant-form-item]:!mb-0 items-end gap-y-4">
-              <Form.Item label="Khoảng thời gian">
+              <Form.Item label={t('auditLog.filter.dateRange')}>
                 <RangePicker
                   value={dateRange}
                   onChange={(values) => {
@@ -209,21 +216,21 @@ const AuditLogPage: React.FC = () => {
                   allowClear={false}
                 />
               </Form.Item>
-              <Form.Item label="Hành động">
+              <Form.Item label={t('auditLog.filter.action')}>
                 <Select
                   allowClear
-                  placeholder="Tất cả"
+                  placeholder={t('auditLog.filter.allOption')}
                   style={{ width: 160 }}
                   options={ACTION_OPTIONS}
                   value={action}
                   onChange={(value) => setAction(value)}
                 />
               </Form.Item>
-              <Form.Item label="Nhân viên">
+              <Form.Item label={t('auditLog.filter.staff')}>
                 <Select
                   allowClear
                   showSearch
-                  placeholder="Tất cả"
+                  placeholder={t('auditLog.filter.allOption')}
                   style={{ width: 220 }}
                   optionFilterProp="label"
                   options={admins.map((a) => ({ value: a.id, label: `${a.username} (${a.roleName})` }))}
@@ -237,9 +244,9 @@ const AuditLogPage: React.FC = () => {
                     type="button"
                     onClick={handleFilter}
                     disabled={loading}
-                    className="h-10 min-w-[112px] px-5 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="h-10 min-w-[112px] px-5 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white font-semibold shadow-md shadow-indigo-200 dark:shadow-indigo-950/50 hover:shadow-lg hover:shadow-indigo-300 dark:hover:shadow-indigo-950/60 hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    {loading ? <LoadingOutlined /> : <FilterOutlined />} Lọc
+                    {loading ? <LoadingOutlined /> : <FilterOutlined />} {t('auditLog.filter.submit')}
                   </button>
                   <Dropdown
                     menu={{ items: exportItems, onClick: ({ key }) => handleExport(key as 'xlsx' | 'csv') }}
@@ -249,9 +256,9 @@ const AuditLogPage: React.FC = () => {
                     <button
                       type="button"
                       disabled={total === 0 || exporting}
-                      className="h-10 min-w-[112px] px-5 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      className="h-10 min-w-[112px] px-5 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white font-semibold shadow-md shadow-indigo-200 dark:shadow-indigo-950/50 hover:shadow-lg hover:shadow-indigo-300 dark:hover:shadow-indigo-950/60 hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      {exporting ? <LoadingOutlined /> : <DownloadOutlined />} Xuất file <DownOutlined className="text-xs opacity-80" />
+                      {exporting ? <LoadingOutlined /> : <DownloadOutlined />} {t('auditLog.filter.export')} <DownOutlined className="text-xs opacity-80" />
                     </button>
                   </Dropdown>
                 </div>
@@ -262,14 +269,14 @@ const AuditLogPage: React.FC = () => {
           <Card
             title={(
               <span className="flex items-center gap-3 py-1">
-                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center text-white text-sm shadow-md shadow-fuchsia-200 shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center text-white text-sm shadow-md shadow-fuchsia-200 dark:shadow-fuchsia-950/50 shrink-0">
                   <UnorderedListOutlined />
                 </span>
-                <span className="font-bold text-slate-800">Danh sách</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{t('auditLog.list.title')}</span>
               </span>
             )}
-            extra={<Tag color="default" bordered={false} className="!m-0 !bg-indigo-50 !text-indigo-700 !font-medium">Tổng {total} bản ghi</Tag>}
-            className="rounded-2xl border-slate-300 shadow-md transition-shadow duration-300 hover:shadow-lg hover:border-fuchsia-300 overflow-hidden"
+            extra={<Tag color="default" bordered={false} className="!m-0 !bg-indigo-50 !text-indigo-700 !font-medium">{t('auditLog.list.totalRecords', { count: total })}</Tag>}
+            className="rounded-2xl border-slate-300 dark:border-slate-700 dark:bg-slate-800 shadow-md transition-shadow duration-300 hover:shadow-lg hover:border-fuchsia-300 overflow-hidden"
             styles={{ body: { padding: 0 } }}
           >
             <Table<AuditLogItem>
@@ -278,21 +285,21 @@ const AuditLogPage: React.FC = () => {
               columns={columns}
               dataSource={data}
               loading={loading}
-              rowClassName={(_, index) => (index % 2 === 1 ? 'bg-indigo-50/30' : 'bg-white')}
+              rowClassName={(_, index) => (index % 2 === 1 ? 'bg-indigo-50/30 dark:bg-indigo-950/20' : 'bg-white dark:bg-slate-800')}
               locale={{
                 emptyText: (
                   <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="Không có bản ghi nào phù hợp với bộ lọc hiện tại."
+                    description={t('auditLog.list.noMatch')}
                     className="my-10"
                   />
                 ),
               }}
               expandable={{
-                columnTitle: <span className="whitespace-nowrap">Chi tiết</span>,
+                columnTitle: <span className="whitespace-nowrap">{t('auditLog.list.details')}</span>,
                 columnWidth: 100,
                 expandedRowRender: (record) => (
-                  <p className="whitespace-pre-wrap text-slate-600">{record.description || 'Không có mô tả'}</p>
+                  <p className="whitespace-pre-wrap text-slate-600">{record.description || t('auditLog.list.noDescription')}</p>
                 ),
               }}
               pagination={{
@@ -300,7 +307,7 @@ const AuditLogPage: React.FC = () => {
                 pageSize,
                 total,
                 showSizeChanger: true,
-                showTotal: (t) => `Tổng ${t} bản ghi`,
+                showTotal: (count) => t('auditLog.list.totalRecords', { count }),
                 onChange: (newPage, newSize) => {
                   setPage(newPage);
                   setPageSize(newSize);

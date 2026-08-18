@@ -59,6 +59,7 @@ class NotificationServiceTest {
                 "password-hash",
                 true,
                 null,
+                "light",
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

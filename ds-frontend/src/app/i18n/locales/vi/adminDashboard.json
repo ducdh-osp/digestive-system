@@ -1,0 +1,11 @@
+{
+  "adminDashboard": {
+    "title": "Trang tổng quan",
+    "subtitle": "Tổng quan hệ thống Gastro AI CMS",
+    "totalCustomers": "Tổng số Khách hàng",
+    "totalAdmins": "Tổng số Admin",
+    "recentActivity": "Hoạt động gần đây",
+    "viewAll": "Xem tất cả",
+    "noActivity": "Chưa có hoạt động nào trong 7 ngày qua."
+  }
+}

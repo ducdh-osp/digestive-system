@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
-import { Spin, message } from 'antd';
+import { Spin } from 'antd';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import { CameraOutlined, UserOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import { profileApi } from '../api/profileApi';
 import { useApiErrorHandler } from '../../../shared/hooks/useApiErrorHandler';
@@ -15,6 +17,7 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB — khớp giới hạn phía Back
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const AvatarUploader = ({ avatarUrl, onUpdated }: AvatarUploaderProps) => {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const handleApiError = useApiErrorHandler();
@@ -25,11 +28,11 @@ const AvatarUploader = ({ avatarUrl, onUpdated }: AvatarUploaderProps) => {
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      message.error('Chỉ chấp nhận ảnh định dạng JPEG, PNG hoặc WEBP');
+      getMessageApi().error(t('profile.avatar.invalidType'));
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      message.error('Kích thước ảnh tối đa 2MB');
+      getMessageApi().error(t('profile.avatar.tooLarge'));
       return;
     }
 
@@ -37,7 +40,7 @@ const AvatarUploader = ({ avatarUrl, onUpdated }: AvatarUploaderProps) => {
       setUploading(true);
       const response = await profileApi.uploadAvatar(file);
       onUpdated(response.data.avatarUrl);
-      message.success('Cập nhật ảnh đại diện thành công');
+      getMessageApi().success(t('profile.avatar.success'));
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -48,9 +51,9 @@ const AvatarUploader = ({ avatarUrl, onUpdated }: AvatarUploaderProps) => {
   return (
     <div className="relative w-16 h-16 shrink-0">
       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-teal-400 p-[2px] shadow-md">
-        <div className="w-full h-full rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
+        <div className="w-full h-full rounded-full bg-blue-50 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
           {avatarUrl ? (
-            <img src={`${API_ORIGIN}${avatarUrl}`} alt="Ảnh đại diện" className="w-full h-full object-cover" />
+            <img src={`${API_ORIGIN}${avatarUrl}`} alt={t('profile.avatar.alt')} className="w-full h-full object-cover" />
           ) : (
             <UserOutlined style={{ fontSize: 30, color: '#2563eb' }} />
           )}
@@ -61,8 +64,8 @@ const AvatarUploader = ({ avatarUrl, onUpdated }: AvatarUploaderProps) => {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 hover:scale-110 hover:shadow-lg hover:shadow-blue-300 border-2 border-white flex items-center justify-center text-white cursor-pointer transition-all duration-200"
-        title="Đổi ảnh đại diện"
+        className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 hover:scale-110 hover:shadow-lg hover:shadow-blue-300 dark:hover:shadow-blue-950/60 border-2 border-white dark:border-slate-800 flex items-center justify-center text-white cursor-pointer transition-all duration-200"
+        title={t('profile.avatar.changeTitle')}
       >
         {uploading ? <Spin size="small" /> : <CameraOutlined style={{ fontSize: 13 }} />}
       </button>

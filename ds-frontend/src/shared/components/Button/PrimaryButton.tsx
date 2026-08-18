@@ -23,7 +23,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
 }) => {
   const variantClass = variant === 'solid'
     ? `${SOLID_CLASSES[color]} text-white`
-    : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400 hover:text-gray-800';
+    : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:border-gray-400 dark:hover:border-slate-500 hover:text-gray-800 dark:hover:text-white';
 
   return (
     <Button

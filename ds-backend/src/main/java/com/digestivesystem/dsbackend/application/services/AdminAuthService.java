@@ -4,6 +4,8 @@ import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.request.AdminLoginRequest;
 import com.digestivesystem.dsbackend.application.dtos.response.AdminAuthResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.AdminAuthMessageCodes;
+import com.digestivesystem.dsbackend.application.exceptions.codes.CommonMessageCodes;
 import com.digestivesystem.dsbackend.domain.entities.Admin;
 import com.digestivesystem.dsbackend.domain.repositories.AdminRepository;
 import com.digestivesystem.dsbackend.infrastructure.services.UserDetailsServiceImpl;
@@ -36,10 +38,10 @@ public class AdminAuthService {
         );
 
         Admin admin = adminRepository.findByUsernameOrEmail(request.getUsername(), request.getUsername())
-                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Tài khoản hoặc mật khẩu không chính xác."));
+                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.INVALID_CREDENTIALS));
 
         if (!admin.getIsActive()) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Tài khoản đã bị vô hiệu hóa.");
+            throw new BusinessException(HttpStatus.FORBIDDEN, AdminAuthMessageCodes.ACCOUNT_DEACTIVATED);
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(SecurityConstants.ADMIN_PREFIX + admin.getUsername());

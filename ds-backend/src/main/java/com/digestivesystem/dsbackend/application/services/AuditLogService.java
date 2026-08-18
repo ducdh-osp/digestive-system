@@ -5,6 +5,7 @@ import com.digestivesystem.dsbackend.application.dtos.response.AuditLogResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ExportedFileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.PageResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.AuditLogMessageCodes;
 import com.digestivesystem.dsbackend.domain.entities.Admin;
 import com.digestivesystem.dsbackend.domain.entities.AuditAction;
 import com.digestivesystem.dsbackend.domain.entities.AuditLog;
@@ -80,14 +81,14 @@ public class AuditLogService {
         validateRange(fromDate, toDate);
         long rangeDays = ChronoUnit.DAYS.between(fromDate, toDate) + 1;
         if (rangeDays > MAX_EXPORT_RANGE_DAYS) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Khoảng thời gian xuất file tối đa là 90 ngày, vui lòng thu hẹp bộ lọc");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, AuditLogMessageCodes.EXPORT_RANGE_TOO_LARGE);
         }
 
         LocalDateTime from = fromDate.atStartOfDay();
         LocalDateTime toExclusive = toDate.plusDays(1).atStartOfDay();
         List<AuditLog> logs = auditLogRepository.searchAll(from, toExclusive, action, adminId);
         if (logs.isEmpty()) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "Không có dữ liệu để xuất");
+            throw new BusinessException(HttpStatus.NOT_FOUND, AuditLogMessageCodes.NO_DATA_TO_EXPORT);
         }
 
         Map<Integer, Admin> adminById = indexAdmins();
@@ -99,7 +100,7 @@ public class AuditLogService {
             return new ExportedFileResponse(buildXlsx(logs, adminById), filename,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         }
-        throw new BusinessException(HttpStatus.BAD_REQUEST, "Định dạng xuất file không hợp lệ (chỉ hỗ trợ xlsx/csv)");
+        throw new BusinessException(HttpStatus.BAD_REQUEST, AuditLogMessageCodes.INVALID_EXPORT_FORMAT);
     }
 
     @Transactional(transactionManager = "mysqlTransactionManager", readOnly = true)
@@ -111,7 +112,7 @@ public class AuditLogService {
 
     private void validateRange(LocalDate fromDate, LocalDate toDate) {
         if (fromDate == null || toDate == null || fromDate.isAfter(toDate)) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Khoảng thời gian lọc không hợp lệ");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, AuditLogMessageCodes.INVALID_DATE_RANGE);
         }
     }
 
@@ -167,7 +168,7 @@ public class AuditLogService {
             workbook.dispose();
             return out.toByteArray();
         } catch (IOException e) {
-            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "Xuất file thất bại, vui lòng thử lại sau");
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, AuditLogMessageCodes.EXPORT_FAILED);
         }
     }
 

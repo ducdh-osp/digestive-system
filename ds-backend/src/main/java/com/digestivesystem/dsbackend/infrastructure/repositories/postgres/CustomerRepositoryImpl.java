@@ -50,6 +50,11 @@ public class CustomerRepositoryImpl implements com.digestivesystem.dsbackend.dom
         entity.setPasswordHash(customer.getPasswordHash());
         entity.setIsActive(customer.getIsActive());
         entity.setAvatarUrl(customer.getAvatarUrl());
+        // customer.getTheme() null ở luồng đăng ký mới (AuthService dựng Customer() rỗng rồi set từng field
+        // thủ công, không đi qua constructor) — giữ lại default "light" của entity thay vì ghi đè null.
+        if (customer.getTheme() != null) {
+            entity.setTheme(customer.getTheme());
+        }
 
         return toDomain(jpaRepository.save(entity));
     }
@@ -63,6 +68,7 @@ public class CustomerRepositoryImpl implements com.digestivesystem.dsbackend.dom
                 entity.getPasswordHash(),
                 entity.getIsActive(),
                 entity.getAvatarUrl(),
+                entity.getTheme(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

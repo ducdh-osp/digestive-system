@@ -3,6 +3,7 @@ package com.digestivesystem.dsbackend.application.services;
 import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.response.DashboardSummaryResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.CommonMessageCodes;
 import com.digestivesystem.dsbackend.domain.repositories.AdminRepository;
 import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public class AdminDashboardService {
         if (authentication == null || !authentication.isAuthenticated()
                 || authentication.getName() == null
                 || !authentication.getName().startsWith(SecurityConstants.ADMIN_PREFIX)) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
     }
 }

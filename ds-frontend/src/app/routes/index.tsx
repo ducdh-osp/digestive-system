@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import DashboardPage from '../../modules/dashboard/pages/DashboardPage';
 import ProfilePage from '../../modules/profile/pages/ProfilePage';
@@ -12,12 +13,23 @@ import AdminLoginPage from '../../modules/admin-auth/pages/AdminLoginPage';
 import AdminDashboardPage from '../../modules/admin/pages/AdminDashboardPage';
 import AuditLogPage from '../../modules/audit-log/pages/AuditLogPage';
 
+/**
+ * Đọc `localStorage` ngay lúc RENDER (mỗi khi React Router mount lại route này), KHÔNG phải lúc
+ * module `router` này được import (chỉ chạy 1 lần lúc app khởi động). Trước đây route `/` và
+ * `/profile` kiểm tra token trực tiếp trong object route (`element: localStorage.getItem(...) ? ... `)
+ * — giá trị đó bị "đóng băng" từ lúc app khởi động, nên nếu người dùng đăng nhập/đăng ký ngay trong
+ * phiên đó (điều hướng phía client, không reload trang), `/` vẫn tưởng chưa đăng nhập và bật ngược
+ * về `/login` dù vừa đăng nhập thành công.
+ */
+function RequireCustomerAuth({ children }: { children: ReactNode }) {
+  const hasToken = Boolean(localStorage.getItem(STORAGE_KEYS.customer.accessToken));
+  return hasToken ? children : <Navigate to="/login" replace />;
+}
+
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: localStorage.getItem(STORAGE_KEYS.customer.accessToken)
-      ? <DashboardPage />
-      : <Navigate to="/login" replace />,
+    element: <RequireCustomerAuth><DashboardPage /></RequireCustomerAuth>,
   },
   {
     element: <AuthLayout />,
@@ -58,9 +70,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/profile',
-    element: localStorage.getItem(STORAGE_KEYS.customer.accessToken)
-      ? <ProfilePage />
-      : <Navigate to="/login" replace />,
+    element: <RequireCustomerAuth><ProfilePage /></RequireCustomerAuth>,
   },
   {
     path: '/admin',

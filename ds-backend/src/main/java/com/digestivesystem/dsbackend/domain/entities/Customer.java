@@ -24,6 +24,7 @@ public class Customer {
     private String passwordHash;
     private Boolean isActive;
     private String avatarUrl;
+    private String theme;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

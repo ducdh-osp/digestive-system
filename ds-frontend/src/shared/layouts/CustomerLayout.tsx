@@ -1,23 +1,26 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ConfigProvider, Tag } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { FileTextOutlined, HeartOutlined, HistoryOutlined, MessageOutlined } from '@ant-design/icons';
 import NotificationBell from '../../modules/notifications/components/NotificationBell';
 import { LogoutButton } from '../components/Button';
+import ThemeToggle from '../components/ThemeToggle/ThemeToggle';
+import LanguageSwitcher from '../components/LanguageSwitcher/LanguageSwitcher';
 import { useCustomerAuth } from '../hooks/useAuth';
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   path?: string;
   icon: ReactNode;
   comingSoon?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Tư vấn với AI', path: '/', icon: <MessageOutlined /> },
-  { label: 'Hồ sơ sức khỏe', path: '/profile', icon: <HeartOutlined /> },
-  { label: 'Lịch sử tư vấn', icon: <HistoryOutlined />, comingSoon: true },
-  { label: 'Hồ sơ bệnh án', icon: <FileTextOutlined />, comingSoon: true },
+  { labelKey: 'nav.customer.aiConsult', path: '/', icon: <MessageOutlined /> },
+  { labelKey: 'nav.customer.healthProfile', path: '/profile', icon: <HeartOutlined /> },
+  { labelKey: 'nav.customer.consultHistory', icon: <HistoryOutlined />, comingSoon: true },
+  { labelKey: 'nav.customer.medicalRecord', icon: <FileTextOutlined />, comingSoon: true },
 ];
 
 interface CustomerLayoutProps {
@@ -42,6 +45,7 @@ interface CustomerLayoutProps {
 const CustomerLayout = ({ title, subtitle, children, fitContent = false }: CustomerLayoutProps) => {
   const location = useLocation();
   const { user, logout } = useCustomerAuth();
+  const { t } = useTranslation();
 
   return (
     <ConfigProvider
@@ -49,15 +53,15 @@ const CustomerLayout = ({ title, subtitle, children, fitContent = false }: Custo
         token: { colorPrimary: '#2563eb', colorLink: '#2563eb', colorInfo: '#2563eb', borderRadius: 8, borderRadiusLG: 16 },
       }}
     >
-      <div className="h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex overflow-hidden">
+      <div className="h-screen bg-gradient-to-br from-slate-100 to-blue-50 dark:from-slate-950 dark:to-slate-900 flex overflow-hidden">
         <aside className="w-64 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 flex flex-col shrink-0">
           <div className="h-24 px-5 flex items-center gap-3 border-b border-slate-700/60 shrink-0">
             <div className="brand-gradient-flow w-10 h-10 rounded-lg shadow-lg shadow-blue-500/30 flex items-center justify-center text-white font-bold text-xl shrink-0">
               G
             </div>
             <div className="min-w-0">
-              <h1 className="text-white font-bold leading-tight truncate">Gastro AI</h1>
-              <span className="text-teal-400 text-xs font-semibold tracking-wide">Customer</span>
+              <h1 className="text-white font-bold leading-tight truncate">{t('common.appName')}</h1>
+              <span className="text-teal-400 text-xs font-semibold tracking-wide">{t('nav.customer.brand')}</span>
             </div>
           </div>
 
@@ -66,15 +70,15 @@ const CustomerLayout = ({ title, subtitle, children, fitContent = false }: Custo
               if (item.comingSoon) {
                 return (
                   <div
-                    key={item.label}
+                    key={item.labelKey}
                     className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-slate-500 cursor-not-allowed select-none"
                   >
                     <span className="flex items-center gap-3 truncate">
                       {item.icon}
-                      {item.label}
+                      {t(item.labelKey)}
                     </span>
                     <Tag color="default" bordered={false} className="!m-0 !bg-slate-800 !text-slate-400 shrink-0">
-                      Sắp ra mắt
+                      {t('common.comingSoon')}
                     </Tag>
                   </div>
                 );
@@ -83,16 +87,16 @@ const CustomerLayout = ({ title, subtitle, children, fitContent = false }: Custo
               const active = location.pathname === item.path;
               return (
                 <Link
-                  key={item.label}
+                  key={item.labelKey}
                   to={item.path as string}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 ease-out ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ease-out ${
                     active
-                      ? 'bg-gradient-to-r from-blue-600 to-teal-500 text-white shadow-md shadow-blue-900/40'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white hover:pl-4 hover:shadow-inner'
+                      ? 'bg-gradient-to-r from-blue-600 to-teal-500 !text-white font-bold text-shadow-sm shadow-md shadow-blue-900/40'
+                      : 'font-medium !text-slate-300 hover:bg-slate-800/80 hover:!text-white hover:pl-4 hover:shadow-inner'
                   }`}
                 >
                   {item.icon}
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -100,20 +104,24 @@ const CustomerLayout = ({ title, subtitle, children, fitContent = false }: Custo
 
           <div className="p-4 border-t border-slate-700/60">
             <div className="mb-3">
-              <div className="text-slate-200 font-semibold text-sm truncate">{user?.fullName || 'Khách'}</div>
-              <div className="text-teal-400 text-xs uppercase tracking-wide">Người dùng</div>
+              <div className="text-slate-200 font-semibold text-sm truncate">{user?.fullName || t('nav.customer.guest')}</div>
+              <div className="text-teal-400 text-xs uppercase tracking-wide">{t('nav.customer.role')}</div>
             </div>
             <LogoutButton onClick={logout} className="w-full justify-center" />
           </div>
         </aside>
 
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-24 bg-gradient-to-r from-white to-blue-50/60 border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+          <header className="h-24 bg-gradient-to-r from-white to-blue-50/60 dark:from-slate-900 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700 px-8 flex items-center justify-between shrink-0">
             <div className="min-w-0">
-              <h2 className="text-2xl font-bold text-slate-800 truncate">{title}</h2>
-              {subtitle && <p className="text-slate-500 text-sm mt-1 truncate">{subtitle}</p>}
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 truncate">{title}</h2>
+              {subtitle && <p className="text-slate-500 dark:text-slate-300 text-sm mt-1 truncate">{subtitle}</p>}
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-1 shrink-0">
+              <ThemeToggle />
+              <LanguageSwitcher />
+              <NotificationBell />
+            </div>
           </header>
 
           <main

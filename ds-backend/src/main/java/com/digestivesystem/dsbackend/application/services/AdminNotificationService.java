@@ -4,6 +4,8 @@ import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.response.AdminNotificationListResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.AdminNotificationResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.CommonMessageCodes;
+import com.digestivesystem.dsbackend.application.exceptions.codes.NotificationMessageCodes;
 import com.digestivesystem.dsbackend.domain.entities.Admin;
 import com.digestivesystem.dsbackend.domain.entities.AdminNotification;
 import com.digestivesystem.dsbackend.domain.repositories.AdminNotificationRepository;
@@ -68,22 +70,22 @@ public class AdminNotificationService {
 
     private AdminNotification findOwnedNotification(Long notificationId, Integer adminId) {
         return adminNotificationRepository.findByIdAndAdminId(notificationId, adminId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, NotificationMessageCodes.NOT_FOUND));
     }
 
     private Admin getCurrentAdmin(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
 
         String username = authentication.getName();
         if (username == null || !username.startsWith(SecurityConstants.ADMIN_PREFIX)) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
 
         String actualUsername = username.substring(SecurityConstants.ADMIN_PREFIX.length());
         return adminRepository.findByUsernameOrEmail(actualUsername, actualUsername)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, CommonMessageCodes.ACCOUNT_NOT_FOUND));
     }
 
     private AdminNotificationResponse toResponse(AdminNotification notification) {
