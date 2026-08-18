@@ -5,13 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NotificationResponse {
-    private UUID id;
+public class AdminNotificationResponse {
+    private Long id;
     private String type;
     private String title;
     private String message;

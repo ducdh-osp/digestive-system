@@ -1,6 +1,7 @@
 package com.digestivesystem.dsbackend.application.services;
 
 import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
+import com.digestivesystem.dsbackend.application.dtos.response.NotificationListResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.NotificationResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
 import com.digestivesystem.dsbackend.domain.entities.Customer;
@@ -23,6 +24,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,14 +71,17 @@ class NotificationServiceTest {
     @Test
     void listOnlyQueriesNotificationsForCurrentCustomer() {
         Notification notification = notification(false);
-        when(notificationRepository.findAllByCustomerIdOrderByCreatedAtDesc(customerId))
+        when(notificationRepository.findPageByCustomerId(customerId, 0, 10))
                 .thenReturn(List.of(notification));
+        when(notificationRepository.countByCustomerId(customerId)).thenReturn(1L);
+        when(notificationRepository.countUnreadByCustomerId(customerId)).thenReturn(1L);
 
-        List<NotificationResponse> result = notificationService.list(authentication);
+        NotificationListResponse result = notificationService.list(0, 10, authentication);
 
-        assertEquals(1, result.size());
-        assertEquals(notification.getId(), result.getFirst().getId());
-        verify(notificationRepository).findAllByCustomerIdOrderByCreatedAtDesc(customerId);
+        assertEquals(1, result.getContent().size());
+        assertEquals(notification.getId(), result.getContent().getFirst().getId());
+        assertEquals(1L, result.getUnreadCount());
+        verify(notificationRepository).findPageByCustomerId(customerId, 0, 10);
     }
 
     @Test
@@ -104,7 +109,25 @@ class NotificationServiceTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
-        verify(notificationRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(notificationRepository, never()).save(any());
+    }
+
+    @Test
+    void markAllAsReadDelegatesToRepositoryForCurrentCustomer() {
+        notificationService.markAllAsRead(authentication);
+
+        verify(notificationRepository).markAllAsReadByCustomerId(customerId);
+    }
+
+    @Test
+    void deleteSoftDeletesOwnedNotification() {
+        Notification notification = notification(false);
+        when(notificationRepository.findByIdAndCustomerId(notification.getId(), customerId))
+                .thenReturn(Optional.of(notification));
+
+        notificationService.delete(notification.getId(), authentication);
+
+        verify(notificationRepository).deleteByIdAndCustomerId(notification.getId(), customerId);
     }
 
     @Test
@@ -129,9 +152,11 @@ class NotificationServiceTest {
         return new Notification(
                 UUID.randomUUID(),
                 customerId,
+                "SYSTEM",
                 "Nhắc nhở sức khỏe",
                 "Bạn có lịch tái khám.",
                 read,
+                read ? LocalDateTime.now() : null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

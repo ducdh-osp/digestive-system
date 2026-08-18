@@ -1,5 +1,5 @@
-export interface NotificationItem {
-  id: string;
+export interface AdminNotificationItem {
+  id: number;
   type: string;
   title: string;
   message: string;
@@ -8,8 +8,8 @@ export interface NotificationItem {
   createdAt: string;
 }
 
-export interface NotificationListResponse {
-  content: NotificationItem[];
+export interface AdminNotificationListResponse {
+  content: AdminNotificationItem[];
   page: number;
   size: number;
   totalElements: number;

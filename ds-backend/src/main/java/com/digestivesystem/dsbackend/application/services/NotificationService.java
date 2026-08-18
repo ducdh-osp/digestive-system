@@ -1,6 +1,7 @@
 package com.digestivesystem.dsbackend.application.services;
 
 import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
+import com.digestivesystem.dsbackend.application.dtos.response.NotificationListResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.NotificationResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
 import com.digestivesystem.dsbackend.domain.entities.Customer;
@@ -12,7 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -28,11 +29,16 @@ public class NotificationService {
     }
 
     @Transactional(transactionManager = "postgresTransactionManager", readOnly = true)
-    public List<NotificationResponse> list(Authentication authentication) {
+    public NotificationListResponse list(int page, int size, Authentication authentication) {
         UUID customerId = getCurrentCustomer(authentication).getId();
-        return notificationRepository.findAllByCustomerIdOrderByCreatedAtDesc(customerId).stream()
+
+        var content = notificationRepository.findPageByCustomerId(customerId, page, size).stream()
                 .map(this::toResponse)
                 .toList();
+        long total = notificationRepository.countByCustomerId(customerId);
+        long unreadCount = notificationRepository.countUnreadByCustomerId(customerId);
+
+        return NotificationListResponse.of(content, page, size, total, unreadCount);
     }
 
     @Transactional(transactionManager = "postgresTransactionManager")
@@ -42,10 +48,17 @@ public class NotificationService {
 
         if (!Boolean.TRUE.equals(notification.getRead())) {
             notification.setRead(true);
+            notification.setReadAt(LocalDateTime.now());
             notification = notificationRepository.save(notification);
         }
 
         return toResponse(notification);
+    }
+
+    @Transactional(transactionManager = "postgresTransactionManager")
+    public void markAllAsRead(Authentication authentication) {
+        UUID customerId = getCurrentCustomer(authentication).getId();
+        notificationRepository.markAllAsReadByCustomerId(customerId);
     }
 
     @Transactional(transactionManager = "postgresTransactionManager")
@@ -83,9 +96,11 @@ public class NotificationService {
     private NotificationResponse toResponse(Notification notification) {
         return new NotificationResponse(
                 notification.getId(),
+                notification.getType(),
                 notification.getTitle(),
                 notification.getMessage(),
                 Boolean.TRUE.equals(notification.getRead()),
+                notification.getReadAt(),
                 notification.getCreatedAt()
         );
     }

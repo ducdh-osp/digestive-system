@@ -81,5 +81,5 @@ Chi tiết đầy đủ nằm ở `00-general/Architecture-and-Codebase.md` (m�
 - `infrastructure/services/UserDetailsServiceImpl.java`, `application/services/JwtService.java` — dùng lại khi A.2.2 cấp token mới sau khi đổi SĐT.
 - `application/exceptions/BusinessException.java` + `GlobalExceptionHandler.java`
 - `application/constants/SecurityConstants.java` (`CUSTOMER_PREFIX`)
-- `core/api/axiosClient.ts`, `shared/hooks/useAuth.ts`, `shared/hooks/useApiErrorHandler.ts` (dùng ở cả 3 tab A.2.2/A.2.3/A.2.4), `shared/components/Button/`, `shared/components/AppHeader.tsx`
+- `core/api/axiosClient.ts`, `shared/hooks/useAuth.ts`, `shared/hooks/useApiErrorHandler.ts` (dùng ở cả 3 tab A.2.2/A.2.3/A.2.4), `shared/components/Button/`, `shared/layouts/CustomerLayout.tsx` (thay cho `shared/components/AppHeader.tsx` cũ, đã bị xoá)
 - **Riêng của A.2:** `infrastructure/file/LocalFileStorageService.java` + `infrastructure/config/WebConfig.java` (chỉ A.2.5 dùng, chưa module nào khác cần tới).

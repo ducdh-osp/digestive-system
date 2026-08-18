@@ -1,61 +1,133 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { LogoutButton } from '../../../shared/components/Button';
+import { Card, Empty, Skeleton, Statistic, Tag, Timeline, Typography } from 'antd';
+import { TeamOutlined, SafetyCertificateOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import AdminLayout from '../../../shared/layouts/AdminLayout';
 import { useAdminAuth } from '../../../shared/hooks/useAuth';
+import { dashboardApi, type DashboardSummary } from '../api/dashboardApi';
+import { auditLogApi } from '../../audit-log/api/auditLogApi';
+import type { AuditAction, AuditLogItem } from '../../audit-log/types';
+
+const { Text } = Typography;
+
+const ACTION_COLORS: Record<AuditAction, string> = {
+  CREATE: 'green',
+  UPDATE: 'geekblue',
+  DELETE: 'red',
+};
 
 const AdminDashboardPage: React.FC = () => {
-  const { isAuthenticated, admin, logout } = useAdminAuth();
+  const { isAuthenticated, admin } = useAdminAuth();
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditLogItem[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    dashboardApi.getSummary()
+      .then((res) => setSummary(res.data))
+      .catch(() => setSummary(null));
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || admin?.role !== 'SUPER_ADMIN') return;
+    setLoadingActivity(true);
+    auditLogApi.list({
+      fromDate: dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
+      toDate: dayjs().format('YYYY-MM-DD'),
+      page: 0,
+      size: 5,
+    })
+      .then((res) => setRecentActivity(res.data.content))
+      .catch(() => setRecentActivity([]))
+      .finally(() => setLoadingActivity(false));
+  }, [isAuthenticated, admin?.role]);
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      <header className="bg-slate-900 shadow-md p-4 px-8 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
-            G
-          </div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Gastro AI <span className="text-indigo-400">CMS</span></h1>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="flex flex-col items-end">
-            <span className="text-slate-200 font-semibold">{admin?.username || 'Admin'}</span>
-            <span className="text-indigo-300 text-xs font-medium uppercase tracking-wider">{admin?.role || 'Quản trị viên'}</span>
-          </div>
-          <div className="h-8 w-px bg-slate-700"></div>
-          <LogoutButton onClick={logout} />
-        </div>
-      </header>
-      <main className="p-8">
-        <div className="bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-4xl mx-auto mt-10 text-center">
-           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-50 mb-6">
-             <span className="text-4xl">🚀</span>
-           </div>
-           <h2 className="text-3xl font-bold text-slate-800 mb-4">Chào mừng đến với hệ thống Quản trị!</h2>
-           <p className="text-slate-500 text-lg">Các tính năng quản lý khách hàng và phân tích dữ liệu đang được hoàn thiện và sẽ sớm được ra mắt.</p>
+    <AdminLayout title="Trang tổng quan" subtitle="Tổng quan hệ thống Gastro AI CMS">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <Card
+            hoverable
+            className="rounded-2xl border-slate-300 [&.ant-card-hoverable:hover]:shadow-indigo-200/60 [&.ant-card-hoverable:hover]:border-indigo-300 [&.ant-card-hoverable:hover]:-translate-y-1 transition-all duration-300"
+          >
+            <div className="flex items-center justify-between">
+              <Statistic
+                title="Tổng số Khách hàng"
+                value={summary?.totalCustomers}
+                loading={!summary}
+                styles={{ content: { color: '#4f46e5', fontWeight: 700 } }}
+              />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-sky-400 flex items-center justify-center text-white text-lg shadow-md shadow-indigo-200">
+                <TeamOutlined />
+              </div>
+            </div>
+          </Card>
+          <Card
+            hoverable
+            className="rounded-2xl border-slate-300 [&.ant-card-hoverable:hover]:shadow-fuchsia-200/60 [&.ant-card-hoverable:hover]:border-fuchsia-300 [&.ant-card-hoverable:hover]:-translate-y-1 transition-all duration-300"
+          >
+            <div className="flex items-center justify-between">
+              <Statistic
+                title="Tổng số Admin"
+                value={summary?.totalAdmins}
+                loading={!summary}
+                styles={{ content: { color: '#c026d3', fontWeight: 700 } }}
+              />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-400 flex items-center justify-center text-white text-lg shadow-md shadow-fuchsia-200">
+                <SafetyCertificateOutlined />
+              </div>
+            </div>
+          </Card>
         </div>
 
         {admin?.role === 'SUPER_ADMIN' && (
-          <div className="max-w-4xl mx-auto mt-6">
-            <Link
-              to="/admin/audit-logs"
-              className="flex items-center justify-between bg-white p-6 rounded-2xl shadow-md border border-slate-300 hover:border-indigo-300 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-2xl">📋</div>
-                <div>
-                  <h3 className="font-bold text-slate-800">Nhật ký hệ thống (Audit Log)</h3>
-                  <p className="text-slate-500 text-sm">Xem, lọc và xuất lịch sử thao tác Create/Update/Delete của Admin</p>
-                </div>
-              </div>
-              <span className="text-indigo-500 text-xl">→</span>
-            </Link>
-          </div>
+          <Card
+            className="rounded-2xl border-slate-300"
+            title={<span className="font-bold text-slate-800">Hoạt động gần đây</span>}
+            extra={
+              <Link
+                to="/admin/audit-logs"
+                className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-all duration-200 inline-flex items-center gap-1 hover:gap-2"
+              >
+                Xem tất cả <ArrowRightOutlined className="text-xs" />
+              </Link>
+            }
+          >
+            {loadingActivity ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : recentActivity.length === 0 ? (
+              <Empty description="Chưa có hoạt động nào trong 7 ngày qua." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ) : (
+              <Timeline
+                items={recentActivity.map((log) => ({
+                  color: log.action === 'DELETE' ? 'red' : log.action === 'CREATE' ? 'green' : 'blue',
+                  children: (
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-sm text-slate-800">
+                          <span className="font-medium">{log.adminUsername}</span>{' '}
+                          {log.description || `${log.action} ${log.entityName}`}
+                        </div>
+                        <Text type="secondary" className="text-xs">
+                          {dayjs(log.createdAt).format('DD/MM/YYYY HH:mm')}
+                        </Text>
+                      </div>
+                      <Tag color={ACTION_COLORS[log.action]}>{log.action}</Tag>
+                    </div>
+                  ),
+                }))}
+              />
+            )}
+          </Card>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

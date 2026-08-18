@@ -35,6 +35,9 @@ public class NotificationEntity {
     @JoinColumn(name = "customer_id", nullable = false)
     private CustomerEntity customer;
 
+    @Column(nullable = false, length = 50)
+    private String type;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -43,6 +46,15 @@ public class NotificationEntity {
 
     @Column(name = "is_read", nullable = false)
     private Boolean read = false;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

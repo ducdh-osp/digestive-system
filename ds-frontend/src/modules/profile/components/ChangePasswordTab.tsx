@@ -65,7 +65,13 @@ const ChangePasswordTab = () => {
         <Input.Password size="large" placeholder="Nhập lại mật khẩu mới" />
       </Form.Item>
 
-      <PrimaryButton fullWidth={false} htmlType="submit" icon={<LockOutlined />} loading={submitting}>
+      <PrimaryButton
+        fullWidth={false}
+        htmlType="submit"
+        icon={<LockOutlined />}
+        loading={submitting}
+        className="!bg-gradient-to-r !from-blue-600 !to-teal-500 !border-0 hover:!shadow-lg hover:!shadow-blue-200 hover:!scale-[1.02] transition-all duration-200"
+      >
         Đổi mật khẩu
       </PrimaryButton>
     </Form>

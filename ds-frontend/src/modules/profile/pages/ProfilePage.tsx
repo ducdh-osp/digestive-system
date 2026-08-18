@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 
-import { ArrowLeftOutlined, LockOutlined, MedicineBoxOutlined, UserOutlined } from '@ant-design/icons';
+import { LockOutlined, MedicineBoxOutlined, UserOutlined } from '@ant-design/icons';
 import { Card, Spin, Tabs, Typography } from 'antd';
 
 import { profileApi } from '../api/profileApi';
@@ -9,7 +8,7 @@ import PersonalInfoTab from '../components/PersonalInfoTab';
 import MedicalProfileTab from '../components/MedicalProfileTab';
 import ChangePasswordTab from '../components/ChangePasswordTab';
 import AvatarUploader from '../components/AvatarUploader';
-import AppHeader from '../../../shared/components/AppHeader';
+import CustomerLayout from '../../../shared/layouts/CustomerLayout';
 import { useApiErrorHandler } from '../../../shared/hooks/useApiErrorHandler';
 import type { Profile } from '../types';
 
@@ -37,9 +36,11 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <Spin size="large" />
-      </div>
+      <CustomerLayout title="Hồ sơ của tôi" fitContent>
+        <div className="flex-1 flex items-center justify-center">
+          <Spin size="large" />
+        </div>
+      </CustomerLayout>
     );
   }
 
@@ -48,30 +49,28 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <AppHeader />
-
-      {/* Quay lại Trang chủ — header giống hệt Trang chủ nên đặt link quay lại riêng ở đây */}
-      <div className="max-w-6xl mx-auto px-6 pt-4">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
-        >
-          <ArrowLeftOutlined /> Quay lại Trang chủ
-        </Link>
-      </div>
-
-      {/* CONTENT */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
+    <CustomerLayout title="Hồ sơ của tôi" subtitle="Quản lý thông tin cá nhân và bảo mật tài khoản">
+      <div className="max-w-6xl mx-auto">
         {/* USER SUMMARY */}
-        <Card className="mb-6 shadow-md">
-          <div className="flex items-center gap-5">
-            <AvatarUploader
-              avatarUrl={profile.avatarUrl}
-              onUpdated={(avatarUrl) => setProfile((prev) => prev ? { ...prev, avatarUrl } : prev)}
-            />
+        <div className="rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden mb-6 bg-white border border-slate-200">
+          <div className="relative h-24 bg-gradient-to-r from-blue-600 via-sky-500 to-teal-500 overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute -bottom-16 left-1/3 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
+          </div>
+          <div className="px-6 pb-6">
+            {/* Chỉ avatar đè lên banner — tách khỏi khối tên/sđt/email để chiều cao text không bao giờ
+                ảnh hưởng tới việc avatar (hoặc tên) bị banner che mất.
+                `relative z-10`: banner có position:relative (để chứa các khối mờ blur) nên mặc định
+                được vẽ đè lên các phần tử tĩnh phía sau nó dù đứng sau trong DOM — phải tự nâng avatar
+                lên cùng "lớp" positioned thì mới đè ngược lại lên banner, tránh mất nửa vòng trắng. */}
+            <div className="relative z-10 -mt-10 inline-flex rounded-full bg-white p-1.5 shadow-lg">
+              <AvatarUploader
+                avatarUrl={profile.avatarUrl}
+                onUpdated={(avatarUrl) => setProfile((prev) => prev ? { ...prev, avatarUrl } : prev)}
+              />
+            </div>
 
-            <div>
+            <div className="mt-4 min-w-0">
               <Title level={3} style={{ margin: 0 }}>
                 {profile.fullName}
               </Title>
@@ -84,9 +83,9 @@ const ProfilePage = () => {
               )}
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="shadow-md">
+        <Card bordered={false} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
           <Tabs
             defaultActiveKey="personal"
             items={[
@@ -125,8 +124,8 @@ const ProfilePage = () => {
             ]}
           />
         </Card>
-      </main>
-    </div>
+      </div>
+    </CustomerLayout>
   );
 };
 

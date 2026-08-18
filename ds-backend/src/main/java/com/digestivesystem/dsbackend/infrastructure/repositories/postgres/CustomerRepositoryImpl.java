@@ -32,6 +32,11 @@ public class CustomerRepositoryImpl implements com.digestivesystem.dsbackend.dom
     }
 
     @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
     public Customer save(Customer customer) {
         // Nếu đã có id: fetch entity gốc rồi mới ghi đè field thay đổi, tránh Hibernate merge
         // ghi đè mất giá trị createdAt (do đối tượng mới dựng tay luôn có createdAt = null).

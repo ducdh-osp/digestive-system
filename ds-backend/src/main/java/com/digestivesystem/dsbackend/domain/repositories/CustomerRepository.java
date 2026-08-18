@@ -13,4 +13,5 @@ public interface CustomerRepository {
     boolean existsByPhoneNumber(String phoneNumber);
     Optional<Customer> findByEmailIgnoreCase(String email);
     Customer save(Customer customer);
+    long count();
 }
