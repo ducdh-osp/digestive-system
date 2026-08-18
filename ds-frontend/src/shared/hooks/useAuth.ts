@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS } from '../../core/constants/storageKeys';
 import type { AuthResponse, AdminAuthResponse } from '../../modules/auth/types';
@@ -21,12 +22,12 @@ export function useCustomerAuth() {
   const user = readJson<CustomerInfo>(STORAGE_KEYS.customer.user);
   const isAuthenticated = Boolean(token);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.customer.accessToken);
     localStorage.removeItem(STORAGE_KEYS.customer.refreshToken);
     localStorage.removeItem(STORAGE_KEYS.customer.user);
     navigate('/login', { replace: true });
-  };
+  }, [navigate]);
 
   return { token, user, isAuthenticated, logout };
 }
@@ -42,12 +43,12 @@ export function useAdminAuth() {
   const admin = readJson<AdminInfo>(STORAGE_KEYS.admin.info);
   const isAuthenticated = Boolean(token);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.admin.accessToken);
     localStorage.removeItem(STORAGE_KEYS.admin.refreshToken);
     localStorage.removeItem(STORAGE_KEYS.admin.info);
     navigate('/admin/login', { replace: true });
-  };
+  }, [navigate]);
 
   return { token, admin, isAuthenticated, logout };
 }

@@ -47,19 +47,21 @@ const AvatarUploader = ({ avatarUrl, onUpdated }: AvatarUploaderProps) => {
 
   return (
     <div className="relative w-16 h-16 shrink-0">
-      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-        {avatarUrl ? (
-          <img src={`${API_ORIGIN}${avatarUrl}`} alt="Ảnh đại diện" className="w-full h-full object-cover" />
-        ) : (
-          <UserOutlined style={{ fontSize: 30, color: '#2563eb' }} />
-        )}
+      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-teal-400 p-[2px] shadow-md">
+        <div className="w-full h-full rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
+          {avatarUrl ? (
+            <img src={`${API_ORIGIN}${avatarUrl}`} alt="Ảnh đại diện" className="w-full h-full object-cover" />
+          ) : (
+            <UserOutlined style={{ fontSize: 30, color: '#2563eb' }} />
+          )}
+        </div>
       </div>
 
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-500 border-2 border-white flex items-center justify-center text-white cursor-pointer transition-colors"
+        className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 hover:scale-110 hover:shadow-lg hover:shadow-blue-300 border-2 border-white flex items-center justify-center text-white cursor-pointer transition-all duration-200"
         title="Đổi ảnh đại diện"
       >
         {uploading ? <Spin size="small" /> : <CameraOutlined style={{ fontSize: 13 }} />}

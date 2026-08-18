@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ConfigProvider, Dropdown, Select, Table, Tag, message } from 'antd';
+import { Card, ConfigProvider, Dropdown, Empty, Form, Select, Table, Tag, message } from 'antd';
 import type { TableProps } from 'antd';
 import { DatePicker } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { DownOutlined, DownloadOutlined, FilterOutlined } from '@ant-design/icons';
+import { DownloadOutlined, DownOutlined, FilterOutlined, LoadingOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import AdminLayout from '../../../shared/layouts/AdminLayout';
 import { useAdminAuth } from '../../../shared/hooks/useAuth';
-import { LogoutButton, PrimaryButton } from '../../../shared/components/Button';
+import { PrimaryButton } from '../../../shared/components/Button';
 import { auditLogApi } from '../api/auditLogApi';
 import type { AdminLookup, AuditAction, AuditLogItem } from '../types';
 
 const { RangePicker } = DatePicker;
 const DATE_FORMAT = 'YYYY-MM-DD';
 
-// Tông chàm (indigo) khớp với màu thương hiệu CMS ở header/dashboard, thay cho xanh dương mặc định của AntD.
+// Tông chàm (indigo) khớp với màu thương hiệu CMS ở sidebar/dashboard, thay cho xanh dương mặc định của AntD.
 const BRAND_COLOR = '#4f46e5';
 
 const ACTION_COLORS: Record<AuditAction, string> = {
@@ -40,7 +41,7 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 const AuditLogPage: React.FC = () => {
-  const { isAuthenticated, admin, logout } = useAdminAuth();
+  const { isAuthenticated, admin } = useAdminAuth();
   const navigate = useNavigate();
 
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(6, 'day'), dayjs()]);
@@ -62,7 +63,7 @@ const AuditLogPage: React.FC = () => {
     }
     auditLogApi.listAdmins()
       .then((res) => setAdmins(res.data))
-      .catch((err) => message.error(err?.message || 'Không tải được danh sách Admin'));
+      .catch(() => setAdmins([]));
   }, [isAuthenticated, admin?.role]);
 
   useEffect(() => {
@@ -82,7 +83,10 @@ const AuditLogPage: React.FC = () => {
         setData(res.data.content);
         setTotal(res.data.totalElements);
       })
-      .catch((err) => message.error(err.message || 'Không tải được lịch sử hoạt động'))
+      .catch(() => {
+        setData([]);
+        setTotal(0);
+      })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, admin?.role, appliedFilter, page, pageSize]);
@@ -92,13 +96,13 @@ const AuditLogPage: React.FC = () => {
   }
   if (admin?.role !== 'SUPER_ADMIN') {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-md text-center">
+      <AdminLayout title="Nhật ký hệ thống">
+        <div className="max-w-md mx-auto bg-white p-10 rounded-2xl shadow-md border border-slate-300 text-center">
           <h2 className="text-xl font-bold text-slate-800 mb-2">Không có quyền truy cập</h2>
           <p className="text-slate-500 mb-6">Chỉ SUPER_ADMIN được xem Nhật ký hệ thống (BR-03).</p>
           <PrimaryButton onClick={() => navigate('/admin/dashboard')} color="indigo">Quay lại Trang tổng quan</PrimaryButton>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
@@ -120,8 +124,8 @@ const AuditLogPage: React.FC = () => {
       const filename = `audit-log_${appliedFilter.dateRange[0].format(DATE_FORMAT)}_${appliedFilter.dateRange[1].format(DATE_FORMAT)}.${format}`;
       downloadBlob(blob, filename);
       message.success('Xuất file thành công');
-    } catch (err: any) {
-      message.error(err?.message || 'Xuất file thất bại, vui lòng thử lại sau');
+    } catch {
+      // Toast lỗi API đã được axiosClient hiển thị toàn cục.
     } finally {
       setExporting(false);
     }
@@ -174,45 +178,26 @@ const AuditLogPage: React.FC = () => {
     <ConfigProvider
       theme={{
         token: { colorPrimary: BRAND_COLOR, colorLink: BRAND_COLOR },
-        components: { Table: { headerBg: '#eef2ff', headerColor: '#3730a3', borderColor: '#cbd5e1' } },
+        components: {
+          Table: { headerBg: '#eef2ff', headerColor: BRAND_COLOR, borderColor: '#e0e7ff', rowHoverBg: '#f5f3ff' },
+        },
       }}
     >
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      <header className="bg-slate-900 shadow-md p-4 px-8 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
-            G
-          </div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Gastro AI <span className="text-indigo-400">CMS</span></h1>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="flex flex-col items-end">
-            <span className="text-slate-200 font-semibold">{admin?.username || 'Admin'}</span>
-            <span className="text-indigo-300 text-xs font-medium uppercase tracking-wider">{admin?.role || 'Quản trị viên'}</span>
-          </div>
-          <div className="h-8 w-px bg-slate-700"></div>
-          <LogoutButton onClick={logout} />
-        </div>
-      </header>
-
-      <main className="p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <button
-                onClick={() => navigate('/admin/dashboard')}
-                className="text-sm text-slate-500 hover:text-indigo-600 mb-2 inline-block"
-              >
-                ← Trang tổng quan
-              </button>
-              <h2 className="text-2xl font-bold text-slate-800">Nhật ký hệ thống (Audit Log)</h2>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl shadow-md border border-slate-300 mb-6">
-            <div className="flex flex-wrap items-end gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Khoảng thời gian</label>
+      <AdminLayout title="Nhật ký hệ thống" subtitle="Lịch sử thao tác Create/Update/Delete của Admin">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <Card
+            title={(
+              <span className="flex items-center gap-3 py-1">
+                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm shadow-md shadow-indigo-200 shrink-0">
+                  <FilterOutlined />
+                </span>
+                <span className="font-bold text-slate-800">Bộ lọc</span>
+              </span>
+            )}
+            className="rounded-2xl border-slate-300 shadow-md transition-shadow duration-300 hover:shadow-lg hover:border-indigo-300"
+          >
+            <Form layout="inline" className="[&_.ant-form-item]:!mb-0 items-end gap-y-4">
+              <Form.Item label="Khoảng thời gian">
                 <RangePicker
                   value={dateRange}
                   onChange={(values) => {
@@ -223,9 +208,8 @@ const AuditLogPage: React.FC = () => {
                   format="DD/MM/YYYY"
                   allowClear={false}
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Hành động</label>
+              </Form.Item>
+              <Form.Item label="Hành động">
                 <Select
                   allowClear
                   placeholder="Tất cả"
@@ -234,9 +218,8 @@ const AuditLogPage: React.FC = () => {
                   value={action}
                   onChange={(value) => setAction(value)}
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Nhân viên</label>
+              </Form.Item>
+              <Form.Item label="Nhân viên">
                 <Select
                   allowClear
                   showSearch
@@ -247,32 +230,64 @@ const AuditLogPage: React.FC = () => {
                   value={adminId}
                   onChange={(value) => setAdminId(value)}
                 />
-              </div>
-              <PrimaryButton onClick={handleFilter} loading={loading} icon={<FilterOutlined />} color="indigo" fullWidth={false}>
-                Lọc
-              </PrimaryButton>
-              <Dropdown
-                menu={{ items: exportItems, onClick: ({ key }) => handleExport(key as 'xlsx' | 'csv') }}
-                disabled={exporting || total === 0}
-              >
-                <button
-                  disabled={exporting || total === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 h-12 rounded-lg border border-indigo-200 text-indigo-700 font-semibold bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-                >
-                  <DownloadOutlined /> Xuất file <DownOutlined className="text-xs" />
-                </button>
-              </Dropdown>
-            </div>
-          </div>
+              </Form.Item>
+              <Form.Item>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleFilter}
+                    disabled={loading}
+                    className="h-10 min-w-[112px] px-5 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    {loading ? <LoadingOutlined /> : <FilterOutlined />} Lọc
+                  </button>
+                  <Dropdown
+                    menu={{ items: exportItems, onClick: ({ key }) => handleExport(key as 'xlsx' | 'csv') }}
+                    disabled={total === 0}
+                    trigger={['click']}
+                  >
+                    <button
+                      type="button"
+                      disabled={total === 0 || exporting}
+                      className="h-10 min-w-[112px] px-5 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white font-semibold shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {exporting ? <LoadingOutlined /> : <DownloadOutlined />} Xuất file <DownOutlined className="text-xs opacity-80" />
+                    </button>
+                  </Dropdown>
+                </div>
+              </Form.Item>
+            </Form>
+          </Card>
 
-          <div className="bg-white rounded-2xl shadow-md border border-slate-300 overflow-hidden">
+          <Card
+            title={(
+              <span className="flex items-center gap-3 py-1">
+                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center text-white text-sm shadow-md shadow-fuchsia-200 shrink-0">
+                  <UnorderedListOutlined />
+                </span>
+                <span className="font-bold text-slate-800">Danh sách</span>
+              </span>
+            )}
+            extra={<Tag color="default" bordered={false} className="!m-0 !bg-indigo-50 !text-indigo-700 !font-medium">Tổng {total} bản ghi</Tag>}
+            className="rounded-2xl border-slate-300 shadow-md transition-shadow duration-300 hover:shadow-lg hover:border-fuchsia-300 overflow-hidden"
+            styles={{ body: { padding: 0 } }}
+          >
             <Table<AuditLogItem>
               rowKey="id"
               bordered
               columns={columns}
               dataSource={data}
               loading={loading}
-              rowClassName={(_, index) => (index % 2 === 1 ? 'bg-slate-50' : 'bg-white')}
+              rowClassName={(_, index) => (index % 2 === 1 ? 'bg-indigo-50/30' : 'bg-white')}
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="Không có bản ghi nào phù hợp với bộ lọc hiện tại."
+                    className="my-10"
+                  />
+                ),
+              }}
               expandable={{
                 columnTitle: <span className="whitespace-nowrap">Chi tiết</span>,
                 columnWidth: 100,
@@ -292,10 +307,9 @@ const AuditLogPage: React.FC = () => {
                 },
               }}
             />
-          </div>
+          </Card>
         </div>
-      </main>
-    </div>
+      </AdminLayout>
     </ConfigProvider>
   );
 };

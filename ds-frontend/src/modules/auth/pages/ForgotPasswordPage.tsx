@@ -28,12 +28,6 @@ const ForgotPasswordPage: React.FC = () => {
             errors: ['Số điện thoại không tồn tại trong hệ thống.'],
           },
         ]);
-      } else if (error.status === 429) {
-         message.error('Bạn đã vượt quá số lần nhận mã trong ngày. Vui lòng thử lại sau.');
-      } else if (error.status === 403) {
-         message.error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.');
-      } else {
-         message.error('Có lỗi xảy ra, vui lòng thử lại sau.');
       }
     } finally {
       setLoading(false);

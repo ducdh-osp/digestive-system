@@ -36,7 +36,7 @@ FE  modules/auth/pages/VerifyOtpPage.tsx (onFinish; nút "Gửi lại mã" là P
     → application/services/JwtService.java (generateToken, generateRefreshToken)
  ← lỗi (nếu có) → application/exceptions/GlobalExceptionHandler.java; thành công → AuthController trả AuthResponse (200)
 FE ← VerifyOtpPage.tsx lưu localStorage qua core/constants/storageKeys.ts (STORAGE_KEYS.customer.*) → navigate('/')
- → app/routes/index.tsx (route '/', guard ternary theo STORAGE_KEYS.customer.accessToken) → modules/dashboard/pages/DashboardPage.tsx render qua shared/components/AppHeader.tsx (tự dùng useCustomerAuth để lấy user/logout), nút Đăng xuất là shared/components/Button/LogoutButton.tsx
+ → app/routes/index.tsx (route '/', guard ternary theo STORAGE_KEYS.customer.accessToken) → modules/dashboard/pages/DashboardPage.tsx render trong shared/layouts/CustomerLayout.tsx (tự dùng useCustomerAuth để lấy user/logout — thay cho shared/components/AppHeader.tsx cũ, file này đã bị xoá khỏi source), nút Đăng xuất là shared/components/Button/LogoutButton.tsx
 ```
 
 ## A.1.3 — Đăng nhập (`POST /auth/login`)
@@ -84,4 +84,4 @@ Chi tiết đầy đủ nằm ở `00-general/Architecture-and-Codebase.md` (m�
 - `infrastructure/services/UserDetailsServiceImpl.java`, `application/services/JwtService.java`
 - `application/exceptions/BusinessException.java` + `GlobalExceptionHandler.java`
 - `application/constants/SecurityConstants.java` (`CUSTOMER_PREFIX`)
-- `core/api/axiosClient.ts`, `shared/hooks/useAuth.ts`, `shared/components/Button/`, `shared/components/AppHeader.tsx`
+- `core/api/axiosClient.ts`, `shared/hooks/useAuth.ts`, `shared/components/Button/`, `shared/layouts/CustomerLayout.tsx` (thay cho `shared/components/AppHeader.tsx` cũ, đã bị xoá)

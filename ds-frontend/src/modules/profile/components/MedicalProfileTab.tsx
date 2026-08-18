@@ -69,7 +69,13 @@ const MedicalProfileTab = ({ medicalProfile, onUpdated }: MedicalProfileTabProps
         </Col>
       </Row>
 
-      <PrimaryButton fullWidth={false} htmlType="submit" icon={<SaveOutlined />} loading={submitting}>
+      <PrimaryButton
+        fullWidth={false}
+        htmlType="submit"
+        icon={<SaveOutlined />}
+        loading={submitting}
+        className="!bg-gradient-to-r !from-blue-600 !to-teal-500 !border-0 hover:!shadow-lg hover:!shadow-blue-200 hover:!scale-[1.02] transition-all duration-200"
+      >
         Lưu hồ sơ sức khỏe
       </PrimaryButton>
     </Form>

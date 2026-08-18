@@ -31,8 +31,6 @@ const LoginPage: React.FC = () => {
             errors: ['Tài khoản hoặc mật khẩu không chính xác.'],
           },
         ]);
-      } else if (error.status === 403) {
-         message.error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.');
       }
     } finally {
       setLoading(false);

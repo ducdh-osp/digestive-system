@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@keyframes brand-gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Tông xanh dương -> xanh ngọc lấy từ minh họa auth-bg.png của trang login */
+.brand-gradient-flow {
+  background: linear-gradient(120deg, #1d4ed8, #2563eb, #0ea5e9, #14b8a6, #2563eb);
+  background-size: 300% 300%;
+  animation: brand-gradient-flow 8s ease infinite;
+}

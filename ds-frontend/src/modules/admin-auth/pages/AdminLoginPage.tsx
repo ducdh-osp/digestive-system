@@ -31,10 +31,6 @@ const AdminLoginPage: React.FC = () => {
             errors: ['Tài khoản hoặc mật khẩu không chính xác.'],
           },
         ]);
-      } else if (error.status === 403) {
-         message.error('Tài khoản của bạn đã bị khóa hoặc không có quyền truy cập.');
-      } else {
-         message.error('Lỗi kết nối tới máy chủ.');
       }
     } finally {
       setLoading(false);
