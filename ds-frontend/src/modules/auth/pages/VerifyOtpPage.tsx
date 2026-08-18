@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { message, Input } from 'antd';
+import { Input } from 'antd';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authApi } from '../api/authApi';
 import type { RegisterRequest, VerifyOtpRequest } from '../types';
 import { PrimaryButton } from '../../../shared/components/Button';
 import { STORAGE_KEYS } from '../../../core/constants/storageKeys';
 
 const VerifyOtpPage: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(180); // 180s countdown
   const location = useLocation();
@@ -39,7 +42,7 @@ const VerifyOtpPage: React.FC = () => {
     try {
       setLoading(true);
       await authApi.register(registerData);
-      message.success('Đã gửi lại mã OTP');
+      getMessageApi().success(t('auth.verifyOtp.resendSuccess'));
       setTimeLeft(180); // Reset timer
     } catch {
       // Toast lỗi API đã được axiosClient hiển thị toàn cục.
@@ -57,13 +60,13 @@ const VerifyOtpPage: React.FC = () => {
         password: registerData.password,
         otpCode: otpCode,
       };
-      
+
       const response = await authApi.verifyOtp(payload);
       if (response.success && response.data) {
         localStorage.setItem(STORAGE_KEYS.customer.accessToken, response.data.accessToken);
         localStorage.setItem(STORAGE_KEYS.customer.refreshToken, response.data.refreshToken);
         localStorage.setItem(STORAGE_KEYS.customer.user, JSON.stringify(response.data.user));
-        message.success('Xác thực và đăng nhập thành công!');
+        getMessageApi().success(t('auth.verifyOtp.verifySuccess'));
         navigate('/');
       }
     } catch {
@@ -76,16 +79,16 @@ const VerifyOtpPage: React.FC = () => {
   return (
     <div className="w-full text-center">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Xác thực số điện thoại</h2>
-        <p className="text-gray-500 mt-4 leading-relaxed">
-          Mã OTP 6 số đã được gửi tới SĐT <br/>
-          <strong className="text-gray-800 text-lg">{registerData.phoneNumber}</strong>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">{t('auth.verifyOtp.title')}</h2>
+        <p className="text-gray-500 dark:text-slate-300 mt-4 leading-relaxed">
+          {t('auth.verifyOtp.subtitlePrefix')} <br/>
+          <strong className="text-gray-800 dark:text-slate-200 text-lg">{registerData.phoneNumber}</strong>
         </p>
       </div>
 
       <div className="flex justify-center mb-6">
-        <Input.OTP 
-          length={6} 
+        <Input.OTP
+          length={6}
           size="large"
           formatter={(str) => str.replace(/\D/g, '')}
           onChange={(text) => {
@@ -97,9 +100,9 @@ const VerifyOtpPage: React.FC = () => {
         />
       </div>
 
-      <div className="mb-8 text-gray-600 font-medium">
-        Gửi lại mã sau:{' '}
-        <span className={`${timeLeft > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+      <div className="mb-8 text-gray-600 dark:text-slate-300 font-medium">
+        {t('auth.verifyOtp.resendLabel')}{' '}
+        <span className={`${timeLeft > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-400'}`}>
           {formatTime(timeLeft)}
         </span>
       </div>
@@ -109,7 +112,7 @@ const VerifyOtpPage: React.FC = () => {
         onClick={handleResendOtp}
         disabled={timeLeft > 0 || loading}
       >
-        Gửi lại mã
+        {t('auth.verifyOtp.resendButton')}
       </PrimaryButton>
     </div>
   );

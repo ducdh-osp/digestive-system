@@ -1,0 +1,35 @@
+{
+  "common": {
+    "appName": "Gastro AI",
+    "comingSoon": "Sắp ra mắt"
+  },
+  "theme": {
+    "switchToDark": "Chuyển sang giao diện Tối",
+    "switchToLight": "Chuyển sang giao diện Sáng"
+  },
+  "language": {
+    "switch": "Chọn ngôn ngữ"
+  },
+  "nav": {
+    "customer": {
+      "aiConsult": "Tư vấn với AI",
+      "healthProfile": "Hồ sơ sức khỏe",
+      "consultHistory": "Lịch sử tư vấn",
+      "medicalRecord": "Hồ sơ bệnh án",
+      "brand": "Customer",
+      "role": "Người dùng",
+      "guest": "Khách"
+    },
+    "admin": {
+      "dashboard": "Trang tổng quan",
+      "auditLog": "Nhật ký hệ thống",
+      "adminManagement": "Quản lý Admin",
+      "brand": "CMS",
+      "role": "Quản trị viên",
+      "guest": "Admin"
+    }
+  },
+  "button": {
+    "logout": "Đăng xuất"
+  }
+}

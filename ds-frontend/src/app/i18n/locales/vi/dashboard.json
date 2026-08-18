@@ -1,0 +1,21 @@
+{
+  "dashboard": {
+    "title": "Tư vấn với Gastro AI",
+    "subtitle": "Chuyên khoa Tiêu hóa · Hỗ trợ bởi AI",
+    "wipTitle": "Tính năng tư vấn AI đang được phát triển",
+    "wipDescription": "Bên dưới là bản xem trước giao diện với dữ liệu mẫu. Bạn sẽ sớm có thể trò chuyện trực tiếp với Gastro AI để được tư vấn về các vấn đề tiêu hóa.",
+    "sampleTimestamp": "Ví dụ, 10:24",
+    "sampleQuestion": "Tôi bị đau dạ dày sau khi ăn đồ cay, tôi nên làm gì?",
+    "sampleAnswerIntro": "Chào bạn, đau dạ dày sau khi ăn cay có thể là dấu hiệu của viêm loét hoặc trào ngược. Đồ cay chứa capsaicin có thể gây kích ứng niêm mạc dạ dày vốn đã nhạy cảm.",
+    "sampleAnswerStepsIntro": "Bạn nên thực hiện các bước sau để giảm nhẹ:",
+    "sampleStep1": "Uống một ít sữa tươi lạnh hoặc nước ấm để làm dịu dạ dày.",
+    "sampleStep2": "Tránh nằm ngay sau khi ăn để ngăn ngừa trào ngược.",
+    "sampleStep3": "Theo dõi cơn đau: nếu đau dữ dội, nôn mửa hoặc kéo dài, hãy đến cơ sở y tế ngay lập tức.",
+    "disclaimer": "AI chỉ hỗ trợ tham khảo, không thay thế chẩn đoán hoặc điều trị của bác sĩ chuyên khoa.",
+    "quickReply1": "Triệu chứng đau dạ dày",
+    "quickReply2": "Chế độ ăn cho người đau bao tử",
+    "quickReply3": "Khi nào cần đi khám?",
+    "inputPlaceholder": "Tính năng đang được phát triển...",
+    "inputFooter": "Tính năng tư vấn AI sẽ sớm được ra mắt."
+  }
+}

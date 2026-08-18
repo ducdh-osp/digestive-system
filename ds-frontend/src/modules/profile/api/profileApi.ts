@@ -8,6 +8,7 @@ import type {
   ProfileUpdateResponse,
   UpdateMedicalProfileRequest,
   UpdateProfileRequest,
+  UpdateThemeRequest,
 } from '../types';
 
 export const profileApi = {
@@ -25,6 +26,10 @@ export const profileApi = {
 
   updateMedicalProfile: (request: UpdateMedicalProfileRequest): Promise<ApiResponse<MedicalProfile>> => {
     return axiosClient.put('/profile/medical', request);
+  },
+
+  updateTheme: (request: UpdateThemeRequest): Promise<ApiResponse<Profile>> => {
+    return axiosClient.put('/profile/theme', request);
   },
 
   uploadAvatar: (file: File): Promise<ApiResponse<Profile>> => {

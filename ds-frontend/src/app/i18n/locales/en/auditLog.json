@@ -1,0 +1,37 @@
+{
+  "auditLog": {
+    "title": "Audit Log",
+    "subtitle": "History of Create/Update/Delete actions by Admins",
+    "accessDenied": {
+      "title": "Access denied",
+      "description": "Only SUPER_ADMIN can view the Audit Log (BR-03).",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "filter": {
+      "title": "Filters",
+      "dateRange": "Date range",
+      "action": "Action",
+      "allOption": "All",
+      "staff": "Staff",
+      "submit": "Filter",
+      "export": "Export",
+      "exportExcel": "Export Excel (.xlsx)",
+      "exportCsv": "Export CSV (.csv)",
+      "exportSuccess": "File exported successfully"
+    },
+    "list": {
+      "title": "List",
+      "totalRecords": "{{count}} records total",
+      "noMatch": "No records match the current filter.",
+      "noDescription": "No description",
+      "details": "Details"
+    },
+    "columns": {
+      "time": "Time",
+      "adminExecutor": "Admin",
+      "action": "Action",
+      "entity": "Entity",
+      "description": "Description"
+    }
+  }
+}

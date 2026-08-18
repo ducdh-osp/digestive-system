@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, message } from 'antd';
+import { Form, Input } from 'antd';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import { LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authApi } from '../api/authApi';
 import type { ResetPasswordRequest } from '../types';
 import { PrimaryButton } from '../../../shared/components/Button';
 
 const ResetPasswordPage: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -15,14 +18,14 @@ const ResetPasswordPage: React.FC = () => {
 
   useEffect(() => {
     if (!phoneNumber) {
-      message.error('Yêu cầu không hợp lệ. Vui lòng bắt đầu lại.');
+      getMessageApi().error(t('auth.resetPassword.invalidRequest'));
       navigate('/forgot-password');
     }
-  }, [phoneNumber, navigate]);
+  }, [phoneNumber, navigate, t]);
 
   const onFinish = async (values: { otpCode: string, newPassword: string }) => {
     if (!phoneNumber) return;
-    
+
     try {
       setLoading(true);
       const request: ResetPasswordRequest = {
@@ -30,10 +33,10 @@ const ResetPasswordPage: React.FC = () => {
         otpCode: values.otpCode,
         newPassword: values.newPassword
       };
-      
+
       const response = await authApi.resetPassword(request);
       if (response.success) {
-        message.success('Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.');
+        getMessageApi().success(t('auth.resetPassword.success'));
         navigate('/login');
       }
     } catch (error: any) {
@@ -41,7 +44,7 @@ const ResetPasswordPage: React.FC = () => {
         form.setFields([
           {
             name: 'otpCode',
-            errors: ['Mã xác thực không chính xác hoặc đã hết hạn.'],
+            errors: [t('auth.resetPassword.otpInvalid')],
           },
         ]);
       }
@@ -53,8 +56,8 @@ const ResetPasswordPage: React.FC = () => {
   return (
     <div className="w-full">
       <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Tạo mật khẩu mới</h2>
-        <p className="text-gray-500">Mã xác thực 6 số đã được gửi tới {phoneNumber}</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">{t('auth.resetPassword.title')}</h2>
+        <p className="text-gray-500 dark:text-slate-300">{t('auth.resetPassword.subtitlePrefix')} {phoneNumber}</p>
       </div>
 
       <Form
@@ -66,62 +69,62 @@ const ResetPasswordPage: React.FC = () => {
         requiredMark={false}
       >
         <Form.Item
-          label={<span className="font-medium text-gray-700">Mã xác thực OTP</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.resetPassword.otpLabel')}</span>}
           name="otpCode"
           rules={[
-            { required: true, message: 'Vui lòng nhập mã OTP!' },
-            { len: 6, message: 'Mã OTP phải có 6 chữ số!' },
+            { required: true, message: t('auth.resetPassword.otpRequired') },
+            { len: 6, message: t('auth.resetPassword.otpLength') },
           ]}
         >
-          <Input 
-            prefix={<SafetyCertificateOutlined className="text-gray-400" />} 
-            placeholder="Nhập 6 chữ số OTP" 
+          <Input
+            prefix={<SafetyCertificateOutlined className="text-gray-400" />}
+            placeholder={t('auth.resetPassword.otpPlaceholder')}
             className="rounded-lg tracking-widest text-center text-lg"
             maxLength={6}
           />
         </Form.Item>
 
         <Form.Item
-          label={<span className="font-medium text-gray-700">Mật khẩu mới</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.resetPassword.newPasswordLabel')}</span>}
           name="newPassword"
           rules={[
-            { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-            { min: 8, message: 'Mật khẩu phải từ 8 ký tự trở lên!' }
+            { required: true, message: t('auth.resetPassword.newPasswordRequired') },
+            { min: 8, message: t('auth.resetPassword.newPasswordMin') }
           ]}
         >
-          <Input.Password 
-            prefix={<LockOutlined className="text-gray-400" />} 
-            placeholder="Nhập mật khẩu mới" 
+          <Input.Password
+            prefix={<LockOutlined className="text-gray-400" />}
+            placeholder={t('auth.resetPassword.newPasswordPlaceholder')}
             className="rounded-lg"
           />
         </Form.Item>
 
         <Form.Item
-          label={<span className="font-medium text-gray-700">Xác nhận mật khẩu mới</span>}
+          label={<span className="font-medium text-gray-700 dark:text-slate-300">{t('auth.resetPassword.confirmPasswordLabel')}</span>}
           name="confirmPassword"
           dependencies={['newPassword']}
           rules={[
-            { required: true, message: 'Vui lòng xác nhận mật khẩu mới!' },
+            { required: true, message: t('auth.resetPassword.confirmPasswordRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('newPassword') === value) {
                   return Promise.resolve();
                 }
-                return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                return Promise.reject(new Error(t('auth.resetPassword.confirmPasswordMismatch')));
               },
             }),
           ]}
         >
-          <Input.Password 
-            prefix={<LockOutlined className="text-gray-400" />} 
-            placeholder="Nhập lại mật khẩu mới" 
+          <Input.Password
+            prefix={<LockOutlined className="text-gray-400" />}
+            placeholder={t('auth.resetPassword.confirmPasswordPlaceholder')}
             className="rounded-lg"
           />
         </Form.Item>
 
         <Form.Item className="mt-8">
           <PrimaryButton htmlType="submit" loading={loading}>
-            ĐỔI MẬT KHẨU
+            {t('auth.resetPassword.submit')}
           </PrimaryButton>
         </Form.Item>
       </Form>

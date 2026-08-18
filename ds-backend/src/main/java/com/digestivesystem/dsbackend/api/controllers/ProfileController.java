@@ -3,6 +3,7 @@ package com.digestivesystem.dsbackend.api.controllers;
 import com.digestivesystem.dsbackend.application.dtos.request.ChangePasswordRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.UpdateMedicalProfileRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.UpdateProfileRequest;
+import com.digestivesystem.dsbackend.application.dtos.request.UpdateThemeRequest;
 import com.digestivesystem.dsbackend.application.dtos.response.ApiResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.MedicalProfileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileResponse;
@@ -46,6 +47,12 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<MedicalProfileResponse>> updateMedicalProfile(
             @Valid @RequestBody UpdateMedicalProfileRequest request, Authentication authentication) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật hồ sơ bệnh lý thành công", profileService.updateMedicalProfile(request, authentication)));
+    }
+
+    @PutMapping("/theme")
+    public ResponseEntity<ApiResponse<ProfileResponse>> updateTheme(
+            @Valid @RequestBody UpdateThemeRequest request, Authentication authentication) {
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật giao diện thành công", profileService.updateTheme(request, authentication)));
     }
 
     @PostMapping("/avatar")

@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Form, Input, Row, Col, message } from 'antd';
+import { Form, Input, Row, Col } from 'antd';
+import { getMessageApi } from '../../../core/api/messageBridge';
 import { SaveOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import { profileApi } from '../api/profileApi';
 import { PrimaryButton } from '../../../shared/components/Button';
@@ -14,6 +16,7 @@ interface PersonalInfoTabProps {
 }
 
 const PersonalInfoTab = ({ profile, onUpdated }: PersonalInfoTabProps) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm<UpdateProfileRequest>();
   const [submitting, setSubmitting] = useState(false);
   const handleApiError = useApiErrorHandler();
@@ -36,7 +39,7 @@ const PersonalInfoTab = ({ profile, onUpdated }: PersonalInfoTabProps) => {
         phoneNumber: result.profile.phoneNumber,
       }));
 
-      message.success('Cập nhật thông tin cá nhân thành công');
+      getMessageApi().success(t('profile.personal.success'));
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -58,21 +61,21 @@ const PersonalInfoTab = ({ profile, onUpdated }: PersonalInfoTabProps) => {
       <Row gutter={20}>
         <Col xs={24} md={12}>
           <Form.Item
-            label="Họ và tên"
+            label={t('profile.personal.fullNameLabel')}
             name="fullName"
-            rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+            rules={[{ required: true, message: t('profile.personal.fullNameRequired') }]}
           >
-            <Input size="large" placeholder="Nhập họ và tên" />
+            <Input size="large" placeholder={t('profile.personal.fullNamePlaceholder')} />
           </Form.Item>
         </Col>
 
         <Col xs={24} md={12}>
           <Form.Item
-            label="Số điện thoại"
+            label={t('profile.personal.phoneLabel')}
             name="phoneNumber"
             rules={[
-              { required: true, message: 'Vui lòng nhập số điện thoại' },
-              { pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0' },
+              { required: true, message: t('profile.personal.phoneRequired') },
+              { pattern: /^0\d{9}$/, message: t('profile.personal.phoneInvalid') },
             ]}
           >
             <Input size="large" placeholder="0987654321" />
@@ -81,9 +84,9 @@ const PersonalInfoTab = ({ profile, onUpdated }: PersonalInfoTabProps) => {
 
         <Col xs={24}>
           <Form.Item
-            label="Email"
+            label={t('profile.personal.emailLabel')}
             name="email"
-            rules={[{ type: 'email', message: 'Email không hợp lệ' }]}
+            rules={[{ type: 'email', message: t('profile.personal.emailInvalid') }]}
           >
             <Input size="large" placeholder="example@gmail.com" />
           </Form.Item>
@@ -95,9 +98,9 @@ const PersonalInfoTab = ({ profile, onUpdated }: PersonalInfoTabProps) => {
         htmlType="submit"
         icon={<SaveOutlined />}
         loading={submitting}
-        className="!bg-gradient-to-r !from-blue-600 !to-teal-500 !border-0 hover:!shadow-lg hover:!shadow-blue-200 hover:!scale-[1.02] transition-all duration-200"
+        className="!bg-gradient-to-r !from-blue-600 !to-teal-500 !border-0 hover:!shadow-lg hover:!shadow-blue-200 dark:hover:!shadow-blue-950/50 hover:!scale-[1.02] transition-all duration-200"
       >
-        Lưu thay đổi
+        {t('profile.personal.save')}
       </PrimaryButton>
     </Form>
   );

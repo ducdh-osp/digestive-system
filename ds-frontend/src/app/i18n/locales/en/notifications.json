@@ -1,0 +1,18 @@
+{
+  "notifications": {
+    "title": "Notifications",
+    "unread": "{{count}} unread notifications",
+    "empty": "No new notifications",
+    "markAllRead": "Mark all as read",
+    "reload": "Reload notifications",
+    "loadError": "Unable to load notifications.",
+    "retry": "Retry",
+    "noItems": "You have no notifications yet.",
+    "loadMore": "Load more",
+    "markAllSuccess": "All notifications marked as read",
+    "unreadAriaLabel": "Unread",
+    "deleteAriaLabel": "Delete notification {{title}}",
+    "bellAriaLabelUnread": "Notifications, {{count}} unread",
+    "bellAriaLabel": "Notifications"
+  }
+}

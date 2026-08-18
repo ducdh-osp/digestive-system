@@ -1,0 +1,55 @@
+{
+  "profile": {
+    "title": "Hồ sơ của tôi",
+    "subtitle": "Quản lý thông tin cá nhân và bảo mật tài khoản",
+    "tabs": {
+      "personal": "Thông tin cá nhân",
+      "medical": "Hồ sơ sức khỏe",
+      "password": "Đổi mật khẩu"
+    },
+    "personal": {
+      "fullNameLabel": "Họ và tên",
+      "fullNameRequired": "Vui lòng nhập họ tên",
+      "fullNamePlaceholder": "Nhập họ và tên",
+      "phoneLabel": "Số điện thoại",
+      "phoneRequired": "Vui lòng nhập số điện thoại",
+      "phoneInvalid": "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0",
+      "emailLabel": "Email",
+      "emailInvalid": "Email không hợp lệ",
+      "save": "Lưu thay đổi",
+      "success": "Cập nhật thông tin cá nhân thành công"
+    },
+    "medical": {
+      "heightLabel": "Chiều cao (cm)",
+      "heightInvalid": "Chiều cao phải lớn hơn 0",
+      "weightLabel": "Cân nặng (kg)",
+      "weightInvalid": "Cân nặng phải lớn hơn 0",
+      "historyLabel": "Tiền sử bệnh",
+      "historyPlaceholder": "Ví dụ: Viêm dạ dày, trào ngược dạ dày...",
+      "save": "Lưu hồ sơ sức khỏe",
+      "success": "Cập nhật hồ sơ sức khỏe thành công"
+    },
+    "password": {
+      "oldLabel": "Mật khẩu hiện tại",
+      "oldPlaceholder": "Nhập mật khẩu hiện tại",
+      "oldRequired": "Vui lòng nhập mật khẩu hiện tại",
+      "newLabel": "Mật khẩu mới",
+      "newPlaceholder": "Nhập mật khẩu mới",
+      "newRequired": "Vui lòng nhập mật khẩu mới",
+      "newMin": "Mật khẩu phải có ít nhất 8 ký tự",
+      "confirmLabel": "Xác nhận mật khẩu mới",
+      "confirmPlaceholder": "Nhập lại mật khẩu mới",
+      "confirmRequired": "Vui lòng xác nhận mật khẩu mới",
+      "confirmMismatch": "Mật khẩu xác nhận không khớp",
+      "submit": "Đổi mật khẩu",
+      "success": "Đổi mật khẩu thành công"
+    },
+    "avatar": {
+      "invalidType": "Chỉ chấp nhận ảnh định dạng JPEG, PNG hoặc WEBP",
+      "tooLarge": "Kích thước ảnh tối đa 2MB",
+      "success": "Cập nhật ảnh đại diện thành công",
+      "changeTitle": "Đổi ảnh đại diện",
+      "alt": "Ảnh đại diện"
+    }
+  }
+}

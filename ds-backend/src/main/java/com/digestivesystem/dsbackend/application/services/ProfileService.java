@@ -4,10 +4,13 @@ import com.digestivesystem.dsbackend.application.constants.SecurityConstants;
 import com.digestivesystem.dsbackend.application.dtos.request.ChangePasswordRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.UpdateMedicalProfileRequest;
 import com.digestivesystem.dsbackend.application.dtos.request.UpdateProfileRequest;
+import com.digestivesystem.dsbackend.application.dtos.request.UpdateThemeRequest;
 import com.digestivesystem.dsbackend.application.dtos.response.MedicalProfileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileResponse;
 import com.digestivesystem.dsbackend.application.dtos.response.ProfileUpdateResponse;
 import com.digestivesystem.dsbackend.application.exceptions.BusinessException;
+import com.digestivesystem.dsbackend.application.exceptions.codes.CommonMessageCodes;
+import com.digestivesystem.dsbackend.application.exceptions.codes.ProfileMessageCodes;
 import com.digestivesystem.dsbackend.domain.entities.Customer;
 import com.digestivesystem.dsbackend.domain.entities.MedicalProfile;
 import com.digestivesystem.dsbackend.domain.repositories.CustomerRepository;
@@ -47,19 +50,19 @@ public class ProfileService {
 
     private Customer getCurrentCustomer(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
 
         String username = authentication.getName();
         if (username == null || !username.startsWith(SecurityConstants.CUSTOMER_PREFIX)) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, CommonMessageCodes.NOT_AUTHENTICATED);
         }
 
         Customer customer = customerRepository.findByPhoneNumber(username.substring(SecurityConstants.CUSTOMER_PREFIX.length()))
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, CommonMessageCodes.ACCOUNT_NOT_FOUND));
 
         if (!Boolean.TRUE.equals(customer.getIsActive())) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa");
+            throw new BusinessException(HttpStatus.FORBIDDEN, CommonMessageCodes.ACCOUNT_LOCKED);
         }
 
         return customer;
@@ -79,13 +82,13 @@ public class ProfileService {
 
         Optional<Customer> customerWithPhone = customerRepository.findByPhoneNumber(newPhoneNumber);
         if (customerWithPhone.isPresent() && !customerWithPhone.get().getId().equals(customer.getId())) {
-            throw new BusinessException(HttpStatus.CONFLICT, "Số điện thoại đã được sử dụng");
+            throw new BusinessException(HttpStatus.CONFLICT, ProfileMessageCodes.PHONE_ALREADY_USED);
         }
 
         if (newEmail != null) {
             Optional<Customer> customerWithEmail = customerRepository.findByEmailIgnoreCase(newEmail);
             if (customerWithEmail.isPresent() && !customerWithEmail.get().getId().equals(customer.getId())) {
-                throw new BusinessException(HttpStatus.CONFLICT, "Email đã được sử dụng");
+                throw new BusinessException(HttpStatus.CONFLICT, ProfileMessageCodes.EMAIL_ALREADY_USED);
             }
         }
 
@@ -107,13 +110,13 @@ public class ProfileService {
         Customer customer = getCurrentCustomer(authentication);
 
         if (!passwordEncoder.matches(request.getOldPassword(), customer.getPasswordHash())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ProfileMessageCodes.CURRENT_PASSWORD_INCORRECT);
         }
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Xác nhận mật khẩu mới không khớp");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ProfileMessageCodes.NEW_PASSWORD_CONFIRM_MISMATCH);
         }
         if (passwordEncoder.matches(request.getNewPassword(), customer.getPasswordHash())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Mật khẩu mới không được giống mật khẩu cũ");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ProfileMessageCodes.NEW_PASSWORD_SAME_AS_OLD);
         }
 
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
@@ -154,13 +157,25 @@ public class ProfileService {
         return buildProfileResponse(customer);
     }
 
+    /**
+     * F.1.1 — đồng bộ Theme (Sáng/Tối) lên Backend để nhất quán khi đăng nhập trên nhiều thiết bị.
+     * Chạy ngầm phía FE (fire-and-forget, BR-03), nên không trả kèm token mới như updateProfile.
+     */
+    @Transactional(transactionManager = "postgresTransactionManager")
+    public ProfileResponse updateTheme(UpdateThemeRequest request, Authentication authentication) {
+        Customer customer = getCurrentCustomer(authentication);
+        customer.setTheme(request.getTheme());
+        customer = customerRepository.save(customer);
+        return buildProfileResponse(customer);
+    }
+
     private ProfileResponse buildProfileResponse(Customer customer) {
         MedicalProfileResponse medicalResponse = medicalProfileRepository.findByCustomerId(customer.getId())
                 .map(this::buildMedicalResponse)
                 .orElse(new MedicalProfileResponse(null, null, null));
 
         return new ProfileResponse(customer.getId(), customer.getFullName(), customer.getPhoneNumber(),
-                customer.getEmail(), customer.getAvatarUrl(), medicalResponse);
+                customer.getEmail(), customer.getAvatarUrl(), customer.getTheme(), medicalResponse);
     }
 
     private MedicalProfileResponse buildMedicalResponse(MedicalProfile medicalProfile) {

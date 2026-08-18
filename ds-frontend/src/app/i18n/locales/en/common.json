@@ -1,0 +1,35 @@
+{
+  "common": {
+    "appName": "Gastro AI",
+    "comingSoon": "Coming soon"
+  },
+  "theme": {
+    "switchToDark": "Switch to Dark mode",
+    "switchToLight": "Switch to Light mode"
+  },
+  "language": {
+    "switch": "Choose language"
+  },
+  "nav": {
+    "customer": {
+      "aiConsult": "AI Consultation",
+      "healthProfile": "Health Profile",
+      "consultHistory": "Consultation History",
+      "medicalRecord": "Medical Record",
+      "brand": "Customer",
+      "role": "Customer",
+      "guest": "Guest"
+    },
+    "admin": {
+      "dashboard": "Dashboard",
+      "auditLog": "Audit Log",
+      "adminManagement": "Admin Management",
+      "brand": "CMS",
+      "role": "Administrator",
+      "guest": "Admin"
+    }
+  },
+  "button": {
+    "logout": "Log out"
+  }
+}

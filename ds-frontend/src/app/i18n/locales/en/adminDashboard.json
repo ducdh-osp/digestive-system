@@ -1,0 +1,11 @@
+{
+  "adminDashboard": {
+    "title": "Dashboard",
+    "subtitle": "Gastro AI CMS system overview",
+    "totalCustomers": "Total Customers",
+    "totalAdmins": "Total Admins",
+    "recentActivity": "Recent Activity",
+    "viewAll": "View all",
+    "noActivity": "No activity in the last 7 days."
+  }
+}

@@ -38,6 +38,9 @@ public class CustomerEntity {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "theme", nullable = false)
+    private String theme = "light";
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

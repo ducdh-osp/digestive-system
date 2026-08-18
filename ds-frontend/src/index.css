@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* F.1.1 — kích hoạt biến thể dark: theo class .dark trên <html>, không theo prefers-color-scheme
+   của hệ điều hành (BR-01/BR-02, tài liệu BA F.1) — Tailwind v4 dùng cấu hình CSS-first này thay
+   cho `darkMode: 'class'` của v3. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+}
+:root.dark {
+  color-scheme: dark;
+}
+
 @keyframes brand-gradient-flow {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from 'antd';
 import { LogoutOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface LogoutButtonProps {
   onClick: () => void;
@@ -10,6 +11,7 @@ interface LogoutButtonProps {
 }
 
 const LogoutButton: React.FC<LogoutButtonProps> = ({ onClick, theme = 'onColor', className = '' }) => {
+  const { t } = useTranslation();
   const themeClass = theme === 'onColor'
     ? 'bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/60'
     : '';
@@ -21,7 +23,7 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ onClick, theme = 'onColor',
       onClick={onClick}
       className={`font-medium ${themeClass} ${className}`}
     >
-      Đăng xuất
+      {t('button.logout')}
     </Button>
   );
 };
